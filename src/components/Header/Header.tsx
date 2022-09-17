@@ -1,5 +1,5 @@
-import { Box, Button, Typography } from '@mui/material';
-import { useContext } from 'react';
+import { Avatar, Box, Button, Divider, IconButton, Menu, MenuItem, Typography } from '@mui/material';
+import { useContext, useState } from 'react';
 import s from 'styled-components'
 import { Context } from '../..';
 import { useTypedSelector } from '../../hooks/useTypedSelector';
@@ -9,13 +9,18 @@ import { useDispatch } from 'react-redux';
 import { signOut } from '../../store/action-creators/user';
 
 function Header() {
-    const { isAuth } = useTypedSelector(state => state.user)
+    const { isAuth, coins } = useTypedSelector(state => state.user);
+    const { photoURL, displayName } = useTypedSelector(state => state.user['user']);
 
     const dispatch = useDispatch();
 
     const logout = () => {
         dispatch<any>(signOut());
     }
+
+
+
+    /////////////
 
     const ButtonHeader = s.button`
         background: none;
@@ -43,6 +48,69 @@ function Header() {
         align-items: center;
         justify-content: space-between;
     `
+
+    const AvatarBlock = s.div`
+        background: white;
+
+        position: absolute;
+        z-index: 9999;
+        top: 3rem;
+        right: -18%;
+
+        transform: scale(0) translateY(10rem);
+        transform-origin: top;
+
+        border-radius: 5px;
+
+        opacity: 0;
+
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+
+        transition: 0.2s;
+
+
+        &:before{
+            content: '';
+            width: 100%;
+            height: 20%;
+            top: -1rem;
+            position: absolute;
+        }
+    `
+
+    const AvatarButton = s.div`
+        background: red;
+        background-image: url(${photoURL});
+        background-position: center;
+        background-size: cover;
+
+        height: 2.5rem;
+        width: 2.5rem;
+
+        z-index: 999999;
+        position: relative;
+
+        border-radius: 50%;
+
+        line-height: 230%;
+        display: flex;
+        justify-content: center;
+        alignItems: center;
+
+        transform: scale(1);
+
+        transition: 0.1s;
+    `
+
+    const AvatarOuter = s.div`
+        &:hover ${AvatarBlock} {
+            width: 50%;
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+        
+    `
+
     return (
         <Box sx={{
             position: 'fixed',
@@ -55,8 +123,8 @@ function Header() {
                 <Typography sx={{ fontWeight: 'bold', fontSize: '2rem', color: '#7B7D7D' }}>CAPS</Typography>
                 {
                     isAuth
-                        ? <Box>
-                            
+                        ? <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+
                             <ButtonHeader>
                                 Инвентарь
                             </ButtonHeader>
@@ -66,9 +134,38 @@ function Header() {
                             <ButtonHeader>
                                 Аукцион
                             </ButtonHeader>
-                            <ButtonHeader onClick={logout}>
+                            <AvatarOuter>
+                                <AvatarButton>
+                                    {displayName[0]}
+                                </AvatarButton>
+                                <AvatarBlock>
+                                    <Box sx={{ padding: '0.5rem' }}>
+                                        <Typography>
+                                            {displayName}
+                                        </Typography>
+                                        <Typography sx={{ fontSize: '12px' }}>
+                                            {coins} c.
+                                        </Typography>
+                                    </Box>
+                                    <Divider />
+                                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                        <ButtonHeader>
+                                            Настройки
+                                        </ButtonHeader>
+                                        <ButtonHeader onClick={logout}>
+                                            Выход
+                                        </ButtonHeader>
+                                    </Box>
+                                </AvatarBlock>
+                            </AvatarOuter>
+
+
+
+
+
+                            {/* <ButtonHeader onClick={logout}>
                                 Выход
-                            </ButtonHeader>
+                            </ButtonHeader> */}
                         </Box>
                         : <ButtonHeader >Вход</ButtonHeader>
                 }

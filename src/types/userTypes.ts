@@ -3,6 +3,7 @@ export enum UserActionTypes {
     LOGOUT_USER = "LOGOUT_USER",
     LOADING = "LOADING",
     SET_CAPS = "SET_CAPS",
+    SELL_CAP = "SELL_CAP",
 
 }
 
@@ -22,11 +23,23 @@ interface IUserLogoutAction {
 
 interface ISetCaps {
     type: UserActionTypes.SET_CAPS;
-    payload: any[] | null;
+    payload: {
+        caps: any[] | null;
+        coins: number;
+    } | null;
+} 
+
+interface ISellCap {
+    type: UserActionTypes.SELL_CAP;
+    payload: {
+        capId: string;
+        cost: number;
+    };
 } 
 
 export type UserAction =
     IUserLoginAction |
     IUserLogoutAction |
     ISetIsLoading |
-    ISetCaps;
+    ISetCaps |
+    ISellCap;

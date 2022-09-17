@@ -18,7 +18,7 @@ function getRandomInt(max: number) {
 }
 
 function InventoryPage() {
-    const {displayName, uid} = useTypedSelector<any>(state => state.user.user);
+    const {displayName, uid} = useTypedSelector<any>(state => state.user['user']);
     const {caps, isLoading} = useTypedSelector<any>(state => state.user);
 
     const dispatch = useDispatch();
@@ -127,13 +127,15 @@ function InventoryPage() {
                         }}>
                             {
                                 caps.map((c: any) => <CapBlock
-                                    id={0}
+                                    key={c.id}
+                                    id={c.id}
                                     name={c.name}
                                     bundle={c.bundle}
                                     frontImage={c.frontImage}
                                     backImage={c.backImage}
                                     points={c.points}
                                     cost={c.cost}
+                                    uid={uid}
                                     rare={c.rare} />)
                             }
                         </Box>

@@ -1,9 +1,11 @@
 import { Button, ButtonGroup, Divider, Typography } from '@mui/material';
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import s, { keyframes } from 'styled-components'
+import { sellCap } from '../../../store/action-creators/user';
 
 interface ICapProps {
-    id: number;
+    id: string;
     name: string;
     bundle: string;
     frontImage: string;
@@ -11,12 +13,21 @@ interface ICapProps {
     cost: number;
     points: number;
     rare: string;
+    uid: string;
 }
 //обычный, необычный, редкий, эпический, мифический, легендарный,
 //common, uncommon, rare, epic, mythical, legendary
-function CapBlock({ id, name, frontImage, backImage, cost, points, rare, bundle }: ICapProps) {
+function CapBlock({ id, name, frontImage, backImage, cost, points, rare, bundle, uid }: ICapProps) {
 
     const [isOpenedMenu, setOpenedMenu] = useState(false)
+    
+    const dispatch = useDispatch();
+
+    const sell = () => {
+        dispatch<any>(sellCap(id, uid, cost))
+    }
+
+    ////////////////////
     
     const capAnimIn = keyframes`
         0%{
@@ -277,8 +288,8 @@ function CapBlock({ id, name, frontImage, backImage, cost, points, rare, bundle 
                     <ButtonsBlock>
                         <ButtonMenu>Обменять</ButtonMenu>
                         <Divider />
-                        <ButtonMenu>Продать за 
-                            <Typography component="span" sx={{fontWeight: '600', fontSize: 'inherit'}}>
+                        <ButtonMenu onClick={sell}>Продать за 
+                            <Typography component="span" sx={{fontWeight: '600', fontSize: 'inherit', lineHeight: '0'}}>
                                 {' '+cost}c
                             </Typography>
                         </ButtonMenu>

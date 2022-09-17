@@ -3,7 +3,7 @@ import { User } from "firebase/auth";
 import { UserAction, UserActionTypes } from "../../types/userTypes"
 
 interface IUserState {
-    user: User | {};
+    user: any;
     caps: any[] | null;
     coins: number;
     isAuth: boolean;
@@ -30,7 +30,19 @@ export const userReducer = (state = defaultState, action: UserAction) => {
             return {...state, isLoading: action.payload}
         }
         case UserActionTypes.SET_CAPS: {
-            return {...state, caps: action.payload}
+            return {
+                ...state,
+                caps: action.payload?.caps,
+                coins: action.payload?.coins
+            }
+        }
+        case UserActionTypes.SELL_CAP: {
+            const newCaps = state.caps?.filter(c => c?.id !== action.payload.capId);
+            return {
+                ...state,
+                caps: newCaps,
+                coins: state.coins + action.payload.cost 
+            }
         }
 
         default: return state
