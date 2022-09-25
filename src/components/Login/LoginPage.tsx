@@ -4,7 +4,7 @@ import s from 'styled-components'
 import { Context } from '../../index'
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { useDispatch } from 'react-redux';
-import { loginWithGoogle } from '../../store/action-creators/user';
+import { loginWithGoogle } from '../../store/action-creators/userAC';
 
 function LoginPage() {
 

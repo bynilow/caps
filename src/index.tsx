@@ -5,10 +5,10 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { createContext } from 'react';
 import * as firebase from 'firebase/app';
-import { store } from './store';
 import { Provider } from 'react-redux';
 import { useTypedSelector } from './hooks/useTypedSelector';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { setupStore } from './store/store';
 
 
 const firebaseConfig = {
@@ -26,6 +26,8 @@ const provider = new GoogleAuthProvider();
 const auth = getAuth();
 
 export const Context = createContext<any>(null);
+
+const store = setupStore();
 
 
 

@@ -9,10 +9,14 @@ import { useAuthState } from 'react-firebase-hooks/auth'
 import { useContext } from "react";
 import { Context } from ".";
 import { useDispatch } from "react-redux";
-import { authUser } from "./store/action-creators/user";
+import { authUser } from "./store/action-creators/userAC";
 import './App.css'
 import { Box } from "@mui/material";
 import Loader from "./components/common/Loader";
+import userSlice from "./store/slices/userSlice";
+import { useAppDispatch } from "./hooks/useAppDispatch";
+import { UserInfo } from "firebase/auth";
+import capsSlice from "./store/slices/capsSlice";
 
 const Root = s.div`
   padding-top: 150px
@@ -22,10 +26,23 @@ const Root = s.div`
 
 function App() {
 
+  const {setCoins} = capsSlice.actions;
+  const dispatch = useAppDispatch();
+
   const { auth } = useContext(Context);
+  
   const [user] = useAuthState(auth);
-  const dispatch = useDispatch();
-  user && dispatch<any>(authUser(user));
+
+  let userToDispatch: UserInfo = {
+    displayName: user?.displayName || '',
+    email: user?.email || '',
+    phoneNumber: user?.phoneNumber || '',
+    photoURL: user?.photoURL || '',
+    providerId: user?.providerId || '',
+    uid: user?.uid || ''
+  }
+
+  user && dispatch(authUser(userToDispatch));
 
   return (
     <BrowserRouter>
