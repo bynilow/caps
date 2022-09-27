@@ -13,6 +13,14 @@ export interface ICap {
     date: number;
 }
 
+export interface ICapToSell {
+    id: string;
+    name: string;
+    rare: string;
+    cost: number;
+    frontImage: string;
+}
+
 export interface ISetCapsAction {
     caps: ICap[] | null;
 }

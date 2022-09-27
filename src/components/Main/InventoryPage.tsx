@@ -2,9 +2,11 @@ import { Box, Button, Divider, MenuItem, Select, SelectChangeEvent, TextField, T
 import { collection, doc, getDoc, getDocs, getFirestore, setDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import styled from "styled-components";
 import s from 'styled-components';
 import { useTypedSelector } from "../../hooks/useTypedSelector";
 import { getMyCaps, sortCaps } from "../../store/action-creators/capsAC";
+import { ICap, ICapToSell } from "../../types/capsTypes";
 import { SORT_BY_BUNDLE, SORT_BY_NAME, SORT_CHEAP_FIRST, SORT_COMMON_FIRST, SORT_EXPENSIVE_FIRST, SORT_NEW_FIRST, SORT_OLD_FIRST, SORT_RARE_FIRST } from "../../utils/consts";
 import Loader from "../common/Loader";
 import SellingCapsModal from "../Modal/SellingCapsModal";
@@ -17,11 +19,37 @@ function getRandomInt(max: number) {
 }
 
 const Container = s.div`
-        width: 70%;
-        min-height: '100vh';
-        height: 100%;
-        margin: auto;
-    `
+    width: 70%;
+    min-height: '100vh';
+    height: 100%;
+    margin: auto;
+`
+
+const ButtonSelling = styled.button.attrs((props:any) => ({
+    isSelling: props.isSelling,
+    isEnable: props.isEnable
+}))`
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 5px;
+    padding: 0.6rem;
+    color: white;
+    background: ${(props: any) =>
+        props.isEnable
+            ? props.isSelling
+                ? '#28B463'
+                : '#CB4335'
+            : '#797D7F'};
+    margin: ${(props:any) => (props.isSelling) ? '5rem' : '0'}
+    line-height: 0;
+
+    transition: 0.1s;
+
+    &:hover{
+        filter: brightness(90%);
+    }
+`
 
 function InventoryPage() {
     const {displayName, uid } = useTypedSelector<any>(state => state.user['user']);
@@ -32,12 +60,16 @@ function InventoryPage() {
     const db = getFirestore();
 
     interface ISellingModal {
-        open: boolean;
         uid: string;
         id: string;
         cost: number;
     }
-    const [sellingMenu, setSellingMenu] = useState<ISellingModal>({open: false, uid: '-1', id: '-1', cost: -1})
+    const [isSellingMenuOpened, setIsSellingMenuOpened] = useState<boolean>(false)
+    
+    const [isSellingOne, setSellingOne] = useState<ISellingModal>({uid: '-1', id: '-1', cost: -1})
+
+    const [sellingCaps, setSellingCaps] = useState<ICapToSell[]>([])
+    const [isSellingSomeMode, setIsSellingSomeMode] = useState<boolean>(false)
 
     const [filter, setFilter] = useState('0')
     const [sorting, setSorting] = useState(SORT_NEW_FIRST)
@@ -108,11 +140,13 @@ function InventoryPage() {
     }
 
     const openModalSelling = (uid: string, id: string, cost: number) => {
-        setSellingMenu({open: true, id, uid, cost})
+        setSellingOne({id, uid, cost});
+        setIsSellingMenuOpened(true);
     }
 
     const closeModalSelling = () => {
-        setSellingMenu({open: false, id: '', uid: '', cost: -1})
+        setSellingOne({id: '', uid: '', cost: -1})
+        setIsSellingMenuOpened(false);
     }
 
     const onFilterChange = (e: SelectChangeEvent) => {
@@ -124,17 +158,40 @@ function InventoryPage() {
         setSorting(e.target.value)
     }
 
+
+    const addCapToSelling = (cap: ICapToSell) => {
+        let newCaps = JSON.parse(JSON.stringify(sellingCaps));
+        newCaps.push(cap);
+        console.log(newCaps);
+        setSellingCaps(newCaps);
+    }
+
+    const removeCapToSelling = (idCap: string) => {
+        let newCaps = sellingCaps.filter(c => c.id !== idCap);
+        console.log(newCaps);
+        setSellingCaps(newCaps);
+    }
+
+    const cancelSomeSelling = () => {
+        setSellingCaps([]);
+        setIsSellingSomeMode(false);
+    }
+
     return ( 
         <Box sx={{
             background: '#f4f4f5',
             minHeight: '100vh'
         }}>
             {
-                sellingMenu.open && <SellingCapsModal
-                    cost={sellingMenu.cost}
-                    uid={sellingMenu.uid}
-                    id={sellingMenu.id}
+                isSellingMenuOpened 
+                ? <SellingCapsModal
+                    cost={isSellingOne.cost}
+                    uid={uid}
+                    id={isSellingOne.id}
+                    isSomeSelling={isSellingSomeMode}
+                    capsToSelling={sellingCaps}
                     closeModal={closeModalSelling} />
+                : <></>
             }
             <Container>
                 <Typography sx={{fontSize: '2rem', color: '#666', padding: '10px 0'}}>
@@ -196,15 +253,50 @@ function InventoryPage() {
                         </MenuItem>
                     </Select>
                     <Button onClick={addCapToUser}>add</Button>
+                    <Box sx={{ minWidth: '15%' }}>
+                        {
+                            isSellingSomeMode
+                                ? <Box sx={{display: 'flex', height: '100%', justifyContent: 'space-between'}}>
+                                    <ButtonSelling
+                                        isSelling={false}
+                                        onClick={() => setIsSellingMenuOpened(true)}
+                                        disabled={!(sellingCaps.length)}
+                                        isEnable={sellingCaps.length}>
+                                        Продать
+                                    </ButtonSelling>
+                                    <ButtonSelling
+                                        isSelling={true}
+                                        onClick={cancelSomeSelling}
+                                        isEnable={true}>
+                                        Отменить
+                                    </ButtonSelling>
+                                </Box>
+                                : <ButtonSelling
+                                    isSelling={isSellingSomeMode}
+                                    onClick={() => setIsSellingSomeMode(!isSellingSomeMode)}
+                                    disabled={!caps}
+                                    isEnable={caps}>
+                                    Продать несколько
+                                </ButtonSelling>
+                        }
+
+                    </Box>
+
                 </Box>
                 {
-                    isLoading && !(sellingMenu.open)
+                    isLoading && !(isSellingMenuOpened)
                         ? <Box sx={{height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                             <Loader />
                         </Box>
                         : <></>
                     
                 }
+                <Typography sx={{textAlign: 'center', marginTop: '1rem', fontWeight: 'bold'}}>
+                    {
+                        isSellingSomeMode && 'Выберите несколько для продажи'
+                    }
+                </Typography>
+                
                 {
                     caps
                         ? <Box sx={{
@@ -222,12 +314,19 @@ function InventoryPage() {
                                     name={c.name}
                                     bundle={c.bundle}
                                     frontImage={c.frontImage}
+                                    backImage={c.backImage}
                                     date={c.date}
                                     points={c.points}
                                     cost={c.cost}
                                     uid={uid}
                                     rare={c.rare}
-                                    openModal={(uid: string, id: string, cost: number) => openModalSelling(uid, id, cost)} />)
+                                    isSellingMode={isSellingSomeMode}
+                                    addCapToSelling={(cap: ICapToSell) =>
+                                        addCapToSelling(cap)}
+                                    removeCapToSelling={(idCap: string) =>
+                                        removeCapToSelling(idCap)}
+                                    openModal={(uid: string, id: string, cost: number) => 
+                                        openModalSelling(uid, id, cost)} />)
                             }
                             <EmptyCapBlock />
                             <EmptyCapBlock />

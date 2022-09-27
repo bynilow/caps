@@ -7,6 +7,7 @@ interface IUserState {
     isAuth: boolean;
     isLoading: boolean;
     error: string;
+    coins: number;
 }
 
 const emptyUser: UserInfo = {
@@ -22,7 +23,8 @@ const initialState: IUserState = {
     user: emptyUser,
     isAuth: false,
     isLoading: false,
-    error: ''
+    error: '',
+    coins: 0,
 }
 
 
@@ -44,6 +46,12 @@ const userSlice = createSlice({
         },
         setErrorReducer(state, action: PayloadAction<string>) {
             state.error = action.payload;
+        },
+        setCoins(state, action: PayloadAction<number>) {
+            state.coins = action.payload;
+        },
+        addCoins(state, action: PayloadAction<number> ){
+            state.coins += action.payload;
         }
         
     }

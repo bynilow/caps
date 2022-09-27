@@ -99,7 +99,7 @@ const AvatarOuter = s.div`
 
 function Header() {
     const { isAuth } = useTypedSelector(state => state.user);
-    const { coins } = useTypedSelector(state => state.caps);
+    const { coins } = useTypedSelector(state => state.user);
     const { photoURL, displayName } = useTypedSelector(state => state.user['user']);
 
     const dispatch = useDispatch();

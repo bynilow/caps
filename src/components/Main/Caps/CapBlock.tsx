@@ -1,12 +1,8 @@
-import { Box, Button, ButtonGroup, Divider, Typography } from '@mui/material';
-import { useState } from 'react';
+import { Divider, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import styled from 'styled-components';
-import s, { keyframes } from 'styled-components'
-import { sellCap } from '../../../store/action-creators/capsAC';
-import SellingCapsModal from '../../Modal/SellingCapsModal';
-
-
+import { default as s, default as styled, keyframes } from 'styled-components';
+import { ICap, ICapToSell } from '../../../types/capsTypes';
 
 const capAnimIn = keyframes`
     0%{
@@ -62,15 +58,23 @@ const Cap = styled.div.attrs((props:any) => ({
 `
 
 const Block = styled.div.attrs((props:any) => ({
-    isOpenedMenu: props.isOpenedMenu
+    isOpenedMenu: props.isOpenedMenu,
+    isSellingMode: props.isSellingMode,
+    isSelected: props.isSelected
 }))`
     width: 10rem;
     height: 10rem;
-
+    
+    outline: ${(props: any) =>
+        props.isSellingMode
+            ? props.isSelected
+                ? '5px solid #212F3C'
+                : '0px solid #212F3C'
+            : '0px solid #5D6D7E'};
     border-radius: 5px;
     box-shadow: 0 0 5px rgba(0,0,0,0.1);
 
-    padding: .5rem;
+    padding: 0.5rem;
     margin: 1rem;
 
     position: relative;
@@ -78,7 +82,7 @@ const Block = styled.div.attrs((props:any) => ({
     display: flex;
     justify-content: center;
 
-    transition: 0.2s;
+    transition: 0.1s;
 
     cursor: pointer;
 
@@ -264,19 +268,56 @@ interface ICapProps {
     name: string;
     bundle: string;
     frontImage: string;
+    backImage: string;
     cost: number;
     points: number;
     rare: string;
     uid: string;
     date: number;
+    isSellingMode: boolean;
     openModal: (uid: string, id: string, cost: number) => void;
+    addCapToSelling: (cap: ICapToSell) => void;
+    removeCapToSelling: (id: string) => void;
 }
 //обычный, необычный, редкий, эпический, мифический, легендарный,
 //common, uncommon, rare, epic, mythical, legendary
 
-function CapBlock({ id, name, frontImage, cost, points, rare, bundle, uid, date, openModal }: ICapProps) {
+function CapBlock({ 
+    id, name, frontImage, 
+    cost, points, rare, 
+    bundle, uid, date, 
+    isSellingMode, backImage,
+    openModal, addCapToSelling, removeCapToSelling }: ICapProps) {
 
     const [isOpenedMenu, setOpenedMenu] = useState(false);
+    const [isSelectedToSell, setIsSelectedToSell] = useState(false);
+
+    const onClickOpenMenu = (open: boolean) => {
+        if(isSellingMode){
+            
+            if(!isSelectedToSell){
+                addCapToSelling({
+                    cost,
+                    frontImage,
+                    id,
+                    name,
+                    rare
+                });
+            }
+            else{
+                removeCapToSelling(id);
+            }
+            setIsSelectedToSell(!isSelectedToSell);
+            
+        }
+        else{
+            setOpenedMenu(open);
+        }
+    }
+
+    useEffect(() => {
+        if(isSelectedToSell) setIsSelectedToSell(false)
+    },[isSellingMode])
     
     const dispatch = useDispatch();
     
@@ -307,9 +348,13 @@ function CapBlock({ id, name, frontImage, cost, points, rare, bundle, uid, date,
 
     return (
         <>
-        {isOpenedMenu && <BlockInfoBackground onClick={() => setOpenedMenu(false)} />}
+        {isOpenedMenu && <BlockInfoBackground onClick={() => onClickOpenMenu(false)} />}
        
-        <Block isOpenedMenu={isOpenedMenu} onClick={() => setOpenedMenu(true)}>
+        <Block 
+            isSellingMode={isSellingMode}
+            isSelected={isSelectedToSell}
+            isOpenedMenu={isOpenedMenu} 
+            onClick={() => onClickOpenMenu(true)}>
             {
                 isOpenedMenu
                     && <BlockInner isOpenedMenu={isOpenedMenu}>

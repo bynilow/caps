@@ -26,7 +26,6 @@ const Root = s.div`
 
 function App() {
 
-  const {setCoins} = capsSlice.actions;
   const dispatch = useAppDispatch();
 
   const { auth } = useContext(Context);

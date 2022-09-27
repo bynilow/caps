@@ -1,7 +1,8 @@
 import { doc, getDoc, getFirestore, increment, setDoc, Timestamp, updateDoc, orderBy } from "firebase/firestore";
-import { ICap } from "../../types/capsTypes";
+import { ICap, ICapToSell } from "../../types/capsTypes";
 import { SORT_NEW_FIRST, SORT_OLD_FIRST, SORT_BY_NAME, SORT_BY_BUNDLE, SORT_COMMON_FIRST, SORT_RARE_FIRST, SORT_EXPENSIVE_FIRST, SORT_CHEAP_FIRST } from "../../utils/consts";
 import capsSlice from "../slices/capsSlice";
+import userSlice from "../slices/userSlice";
 import { AppDispatch } from "../store";
 
 
@@ -18,13 +19,13 @@ export const getMyCaps = (uid: string) => {
             const coins: number = docSnap.data()?.coins;
             caps.sort((a,b) => b.date - a.date)
             
-            if (caps) {                
+            if (caps.length) {                
                 dispatch(capsSlice.actions.setCaps(caps))
-                dispatch(capsSlice.actions.setCoins(coins || 0))
+                dispatch(userSlice.actions.setCoins(coins || 0))
             }
             else {
                 dispatch(capsSlice.actions.setCaps(null))
-                dispatch(capsSlice.actions.setCoins(coins || 0))
+                dispatch(userSlice.actions.setCoins(coins || 0))
             }
 
             dispatch(capsSlice.actions.setLoading(false))
@@ -54,19 +55,64 @@ export const sellCap = (capId: string, uid: string, cost: number) => {
                         caps: newCaps,
                         coins: increment(cost)
                     })
-                    dispatch(capsSlice.actions.sellCap({capId, cost}));
+                    dispatch(capsSlice.actions.sellCap(capId));
+                    dispatch(userSlice.actions.addCoins(cost));
                 }
                 else{
                     await setDoc(doc(db, "users", uid), {
                         caps: newCaps,
                         coins: cost
                     })
-                    dispatch(capsSlice.actions.sellCap({capId, cost}));
+                    dispatch(capsSlice.actions.sellCap(capId));
+                    dispatch(userSlice.actions.addCoins(cost));
                 }
             }
-
             dispatch(capsSlice.actions.setLoading(false))
         } catch (e) {
+            dispatch(capsSlice.actions.setError('Ошибка при продаже'))
+            dispatch(capsSlice.actions.setLoading(false))
+        }
+    }
+}
+
+export const sellSomeCaps = (caps: ICapToSell[], uid: string) => {
+    return async (dispatch: AppDispatch) => {
+        try {
+            dispatch(capsSlice.actions.setLoading(true))
+
+            const cost = caps.reduce((sum,c) => sum + c.cost, 0);
+            const capsId = caps.map(c => c.id);
+
+            const db = getFirestore();
+
+            const docRef = doc(db, "users", uid);
+            const docSnap = await getDoc(docRef);
+            console.log(uid)
+            if (docSnap.data()) {
+                let myCaps:ICap[] = docSnap.data()?.caps;
+                console.log('selling in ac')
+                let newCaps = myCaps.filter(c => capsId.indexOf(c.id) === -1);
+                console.log(newCaps)
+                if(docSnap.data()?.coins){
+                    const updatedRes = await updateDoc(doc(db, "users", uid), {
+                        caps: newCaps,
+                        coins: increment(cost)
+                    })
+                    dispatch(capsSlice.actions.sellSomeCaps(capsId));
+                    dispatch(userSlice.actions.addCoins(cost));
+                }
+                else{
+                    await setDoc(doc(db, "users", uid), {
+                        caps: newCaps,
+                        coins: cost
+                    })
+                    dispatch(capsSlice.actions.sellSomeCaps(capsId));
+                    dispatch(userSlice.actions.addCoins(cost));
+                }
+            }
+            dispatch(capsSlice.actions.setLoading(false))
+        } catch (e) {
+            console.log(e)
             dispatch(capsSlice.actions.setError('Ошибка при продаже'))
             dispatch(capsSlice.actions.setLoading(false))
         }
