@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import s from 'styled-components'
-import { useTypedSelector } from '../../hooks/useTypedSelector';
-import { sellCap, sellSomeCaps } from '../../store/action-creators/capsAC';
-import { ICap, ICapToSell } from '../../types/capsTypes';
-import Loader from '../common/Loader';
+import { useTypedSelector } from '../../../hooks/useTypedSelector';
+import { sellItem, sellSomeItems } from '../../../store/action-creators/capsAC';
+import { IInvItem, IInvItemToSell } from '../../../types/invItemTypes';
+import Loader from '../../common/Loader';
 import SellingEndMessage from './SellingEndMessage';
-import SellingOneCap from './SellingOneCap';
-import SellingSomeCaps from './SellingSomeCaps';
+import SellingOneItem from './SellingOneItem';
+import SellingSomeItems from './SellingSomeItems';
 
 
 const Modal = s.div`
@@ -31,7 +31,7 @@ const Modal = s.div`
 
 const BlockInfo = s.div`
     width: 25rem;
-    min-height: 10rem;
+    min-height: 15%;
 
     padding: 1rem;
         
@@ -49,8 +49,8 @@ const BlockInfo = s.div`
 
     position: fixed;
     left: 50%;
-    top: 0%;
-    transform: translate(-50%, 50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
 `
 
 interface ISellingCapsModalProps {
@@ -58,30 +58,32 @@ interface ISellingCapsModalProps {
     id: string;
     cost: number;
     isSomeSelling: boolean;
-    capsToSelling: ICapToSell[];
+    itemsToSelling: IInvItemToSell[];
+    setSellingItems: () => void;
     closeModal: () => void;
 }
 
-function SellingCapsModal({uid, id, cost, isSomeSelling, capsToSelling, closeModal}:ISellingCapsModalProps) {
+function SellingItemsModal({uid, id, cost, isSomeSelling, itemsToSelling, setSellingItems, closeModal}:ISellingCapsModalProps) {
 
     const dispatch = useDispatch();
 
     const {isLoading} = useTypedSelector(state => state.user)
-    const {error} = useTypedSelector(state => state.caps)
+    const {error} = useTypedSelector(state => state.inventory)
 
     const [isSelled, setIsSelled] = useState(false);
 
     const sell = () => {
         setIsSelled(true);
         if(isSomeSelling) {
-            dispatch<any>(sellSomeCaps(capsToSelling, uid));
+            dispatch<any>(sellSomeItems(itemsToSelling, uid));
+            setSellingItems();
         }
         else{
-            dispatch<any>(sellCap(id, uid, cost));
+            dispatch<any>(sellItem(id, uid, cost));
         }
     }
 
-    const costSomeCaps = capsToSelling.reduce((sum,c) => sum + c.cost, 0);
+    const costSomeCaps = itemsToSelling.reduce((sum,c) => sum + c.cost, 0);
 
     return ( 
         <>
@@ -95,12 +97,12 @@ function SellingCapsModal({uid, id, cost, isSomeSelling, capsToSelling, closeMod
                                 text={error || 'Успешно продано!'}
                                 closeModal={closeModal} />
                         : isSomeSelling
-                            ? <SellingSomeCaps
+                            ? <SellingSomeItems
                                 cost={costSomeCaps}
-                                caps={capsToSelling}
+                                items={itemsToSelling}
                                 sell={sell}
                                 closeModal={closeModal} />
-                            : <SellingOneCap
+                            : <SellingOneItem
                                 cost={cost}
                                 sell={sell}
                                 closeModal={closeModal} />
@@ -112,4 +114,4 @@ function SellingCapsModal({uid, id, cost, isSomeSelling, capsToSelling, closeMod
     );
 }
 
-export default SellingCapsModal;
+export default SellingItemsModal;

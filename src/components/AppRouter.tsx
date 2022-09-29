@@ -5,6 +5,7 @@ import { privateRoutes, publicRoutes } from "../routes";
 import { LOGIN_ROUT, MAIN_ROUT } from "../utils/consts";
 import LoginPage from "./Login/LoginPage";
 import InventoryPage from "./Main/InventoryPage";
+import ShopPage from "./Shop/ShopPage";
 
 function AppRouter() {
     const {isAuth} = useTypedSelector(state => state.user);
@@ -13,14 +14,15 @@ function AppRouter() {
         (
             <Routes>
                 <Route path='/inventory' element={<InventoryPage />} />
-                <Route path='*' element={<Navigate to='/inventory' />} />
+                <Route path='/shop' element={<ShopPage />} />
+                {/* <Route path='*' element={<Navigate to='/inventory' />} /> */}
             </Routes>
         )
         :
         (
             <Routes>
                 <Route path='/login' element={<LoginPage />} />
-                <Route path='*' element={<Navigate to='/login' />} />
+                {/* <Route path='*' element={<Navigate to='/login' />} /> */}
             </Routes>
         );
 }

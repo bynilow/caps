@@ -1,28 +1,30 @@
 import { Timestamp } from 'firebase/firestore';
 
 
-export interface ICap {
+export interface IInvItem {
     id: string;
+    type: string;
     name: string;
     bundle: string;
-    rare: string;
-    points: number;
-    cost: number;
-    frontImage: string;
-    backImage: string;
+    image: string;
     date: number;
+    rare: string;
+    cost: number;
+    points?: number;
+    price?: number;
 }
 
-export interface ICapToSell {
+export interface IInvItemToSell {
     id: string;
     name: string;
-    rare: string;
     cost: number;
-    frontImage: string;
+    image: string;
+    type: string;
+    rare: string;
 }
 
 export interface ISetCapsAction {
-    caps: ICap[] | null;
+    caps: IInvItem[] | null;
 }
 
 export interface ISetCoinsAction {

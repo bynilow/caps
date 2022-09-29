@@ -16,7 +16,7 @@ import Loader from "./components/common/Loader";
 import userSlice from "./store/slices/userSlice";
 import { useAppDispatch } from "./hooks/useAppDispatch";
 import { UserInfo } from "firebase/auth";
-import capsSlice from "./store/slices/capsSlice";
+import inventorySlice from "./store/slices/inventorySlice";
 
 const Root = s.div`
   padding-top: 150px

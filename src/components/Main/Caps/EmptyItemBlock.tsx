@@ -5,10 +5,10 @@ const Empty = s.div`
     height: 10rem;
     margin: 1rem;
 `
-function EmptyCapBlock() {
+function EmptyItemBlock() {
     return ( 
         <Empty />
     );
 }
 
-export default EmptyCapBlock;
+export default EmptyItemBlock;

@@ -5,13 +5,13 @@ import { useDispatch } from "react-redux";
 import styled from "styled-components";
 import s from 'styled-components';
 import { useTypedSelector } from "../../hooks/useTypedSelector";
-import { getMyCaps, sortCaps } from "../../store/action-creators/capsAC";
-import { ICap, ICapToSell } from "../../types/capsTypes";
-import { SORT_BY_BUNDLE, SORT_BY_NAME, SORT_CHEAP_FIRST, SORT_COMMON_FIRST, SORT_EXPENSIVE_FIRST, SORT_NEW_FIRST, SORT_OLD_FIRST, SORT_RARE_FIRST } from "../../utils/consts";
+import { filterItems, findItems, getMyItems, sortItems } from "../../store/action-creators/capsAC";
+import { IInvItem, IInvItemToSell } from "../../types/invItemTypes";
+import { FILTER_ALL_ITEMS, FILTER_ONLY_BUNDLES, FILTER_ONLY_CAPS, SORT_BY_BUNDLE, SORT_BY_NAME, SORT_CHEAP_FIRST, SORT_COMMON_FIRST, SORT_EXPENSIVE_FIRST, SORT_NEW_FIRST, SORT_OLD_FIRST, SORT_RARE_FIRST } from "../../utils/consts";
 import Loader from "../common/Loader";
-import SellingCapsModal from "../Modal/SellingCapsModal";
-import CapBlock from "./Caps/CapBlock";
-import EmptyCapBlock from "./Caps/EmptyCapBlock";
+import SellingItemModal from "../Modal/SellingModal/SellingItemModal";
+import ItemBlock from "./Caps/ItemBlock";
+import EmptyItemBlock from "./Caps/EmptyItemBlock";
 
 
 function getRandomInt(max: number) {
@@ -41,7 +41,7 @@ const ButtonSelling = styled.button.attrs((props:any) => ({
                 ? '#28B463'
                 : '#CB4335'
             : '#797D7F'};
-    margin: ${(props:any) => (props.isSelling) ? '5rem' : '0'}
+    margin-left: ${(props:any) => (props.isSelling) ? '0.5rem' : '0'};
     line-height: 0;
 
     transition: 0.1s;
@@ -51,9 +51,26 @@ const ButtonSelling = styled.button.attrs((props:any) => ({
     }
 `
 
+const InputTextFind = styled.input.attrs((props:any) => ({
+    type: 'text'
+}))`
+    width: 60%;
+
+    margin-right: 1rem;
+    padding: 0.5rem;
+
+    border: 1px solid gray;
+    border-radius: 5px;
+
+    &:focus{
+        outline: 1px solid blue;
+        border: 1px solid blue;
+    }
+`
+
 function InventoryPage() {
     const {displayName, uid } = useTypedSelector<any>(state => state.user['user']);
-    const {caps, isLoading} = useTypedSelector<any>(state => state.caps);
+    const {items, sortedFilteredItems, isLoading} = useTypedSelector<any>(state => state.inventory);
 
     const dispatch = useDispatch();
 
@@ -64,15 +81,17 @@ function InventoryPage() {
         id: string;
         cost: number;
     }
-    const [isSellingMenuOpened, setIsSellingMenuOpened] = useState<boolean>(false)
+    const [isSellingMenuOpened, setIsSellingMenuOpened] = useState<boolean>(false);
     
-    const [isSellingOne, setSellingOne] = useState<ISellingModal>({uid: '-1', id: '-1', cost: -1})
+    const [isSellingOne, setSellingOne] = useState<ISellingModal>({uid: '-1', id: '-1', cost: -1});
 
-    const [sellingCaps, setSellingCaps] = useState<ICapToSell[]>([])
-    const [isSellingSomeMode, setIsSellingSomeMode] = useState<boolean>(false)
+    const [sellingItems, setSellingItems] = useState<IInvItemToSell[]>([]);
+    const [isSellingSomeMode, setIsSellingSomeMode] = useState<boolean>(false);
 
-    const [filter, setFilter] = useState('0')
-    const [sorting, setSorting] = useState(SORT_NEW_FIRST)
+    const [filter, setFilter] = useState(FILTER_ALL_ITEMS);
+    const [sorting, setSorting] = useState(SORT_NEW_FIRST);
+
+    const [findText, setFindText] = useState('');
 
     // const getAllCaps = async() => {
     //     const querySnapshot = await getDocs(collection(db, "caps_shrek_1"));
@@ -86,8 +105,8 @@ function InventoryPage() {
         
     // }
     
-    const addCapToUser = async() => {
-            const capRef = await doc(db, "caps_shrek_1", `c_shrek_${getRandomInt(12)}`);
+    const addItemToUser = async(isBundle: boolean) => {
+            const capRef = await doc(db, "caps_shrek_1", `${isBundle ? `b_shrek_1` : `c_shrek_${getRandomInt(12)}` }`);
             const capSnap = await getDoc(capRef);
     
             const docRef = doc(db, "users", uid);
@@ -95,15 +114,15 @@ function InventoryPage() {
 
             const timestamp = await Date.parse(Timestamp.now().toDate().toISOString());
             
-            if(docSnap.data()?.caps){
-                let myCaps = docSnap.data()?.caps;
+            if(docSnap.data()?.items){
+                let myCaps = docSnap.data()?.items;
                 myCaps.push({
                     ...capSnap.data(), 
                     date: timestamp, 
                     id: capSnap.data()?.id + `_${Date.now()}`
                 });
                 const updatedRes = await updateDoc(doc(db,"users", uid),{
-                    caps: myCaps
+                    items: myCaps
                 })
             }
             else{
@@ -113,7 +132,7 @@ function InventoryPage() {
                     id: capSnap.data()?.id + `_${Date.now()}`
                 };
                 await setDoc(doc(db,"users", uid),{
-                    caps: [myCaps]
+                    items: [myCaps]
                 })
             }
     }
@@ -121,7 +140,7 @@ function InventoryPage() {
 
     useEffect(() => {
         console.log(uid)
-        uid && dispatch<any>(getMyCaps(uid));
+        uid && dispatch<any>(getMyItems(uid));
     }, [uid])
 
     const addCap = async() => {
@@ -149,32 +168,41 @@ function InventoryPage() {
         setIsSellingMenuOpened(false);
     }
 
-    const onFilterChange = (e: SelectChangeEvent) => {
+    const onFilterChange = (e: SelectChangeEvent) => { /////////при сортировке или фильтрации не учитывается
+        dispatch<any>(filterItems(items, e.target.value))
         setFilter(e.target.value)
     }
 
     const onSortingChange = (e: SelectChangeEvent) => {
-        dispatch<any>(sortCaps(caps, e.target.value));
+        dispatch<any>(sortItems(items, e.target.value));
         setSorting(e.target.value)
     }
 
 
-    const addCapToSelling = (cap: ICapToSell) => {
-        let newCaps = JSON.parse(JSON.stringify(sellingCaps));
+    const addItemToSelling = (cap: IInvItemToSell) => {
+        let newCaps = JSON.parse(JSON.stringify(sellingItems));
         newCaps.push(cap);
         console.log(newCaps);
-        setSellingCaps(newCaps);
+        setSellingItems(newCaps);
     }
 
-    const removeCapToSelling = (idCap: string) => {
-        let newCaps = sellingCaps.filter(c => c.id !== idCap);
+    const removeItemToSelling = (idCap: string) => {
+        let newCaps = sellingItems.filter(c => c.id !== idCap);
         console.log(newCaps);
-        setSellingCaps(newCaps);
+        setSellingItems(newCaps);
     }
 
     const cancelSomeSelling = () => {
-        setSellingCaps([]);
+        setSellingItems([]);
         setIsSellingSomeMode(false);
+    }
+
+    const onFindTextChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFindText(e.target.value);
+    }
+
+    const onFindTextKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if(e.keyCode === 13) dispatch<any>(findItems(findText, items))
     }
 
     return ( 
@@ -184,37 +212,57 @@ function InventoryPage() {
         }}>
             {
                 isSellingMenuOpened 
-                ? <SellingCapsModal
+                ? <SellingItemModal
                     cost={isSellingOne.cost}
                     uid={uid}
                     id={isSellingOne.id}
                     isSomeSelling={isSellingSomeMode}
-                    capsToSelling={sellingCaps}
+                    itemsToSelling={sellingItems}
+                    setSellingItems={() => setSellingItems([])}
                     closeModal={closeModalSelling} />
                 : <></>
             }
             <Container>
-                <Typography sx={{fontSize: '2rem', color: '#666', padding: '10px 0'}}>
-                    {
-                        caps 
-                        ? `${displayName} > Инвентарь (${caps.length})`
-                        : <></>
-                    }
-                </Typography>
+                <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <Typography sx={{ 
+                        fontSize: '2rem', 
+                        color: '#666', 
+                        padding: '10px 0',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center' }}>
+                        Инвентарь 
+                        <Typography component="span" sx={{ fontSize: '1rem', marginLeft: '1rem' }}>
+                            {items ? items.length : 0} / 100
+                        </Typography>
+                    </Typography>
+                    <Button variant='contained' size='small'>
+                        Добавить места +50
+                    </Button>
+                    <Button onClick={() => addItemToUser(false)}>
+                        +Фишка
+                    </Button>
+                    <Button onClick={() => addItemToUser(true)}>
+                        +Набор
+                    </Button>
+                </Box>
                 <Box sx={{margin: 'auto', display: 'flex', justifyContent: 'space-between', height: '2rem' }}>
-                    <TextField sx={{ background: 'white', width: '60%', marginRight: '10px' }} size="small" />
+                    <InputTextFind 
+                        value={findText}
+                        onChange={onFindTextChanged}
+                        onKeyDown={onFindTextKeyDown} />
                     <Select
                         size="small"
                         value={filter}
                         sx={{background: 'white',width: '20%',marginRight: '10px' }}
                         onChange={onFilterChange} >
-                        <MenuItem value={0} sx={{fontSize: '14px'}}>
+                        <MenuItem value={FILTER_ALL_ITEMS} sx={{fontSize: '14px'}}>
                             Все предметы
                         </MenuItem>
-                        <MenuItem value={1} sx={{fontSize: '14px'}}>
+                        <MenuItem value={FILTER_ONLY_CAPS} sx={{fontSize: '14px'}}>
                             Фишки
                         </MenuItem>
-                        <MenuItem value={2} sx={{fontSize: '14px'}}>
+                        <MenuItem value={FILTER_ONLY_BUNDLES} sx={{fontSize: '14px'}}>
                             Наборы
                         </MenuItem>
                     </Select>
@@ -252,16 +300,15 @@ function InventoryPage() {
                             Сначала дешевые
                         </MenuItem>
                     </Select>
-                    <Button onClick={addCapToUser}>add</Button>
-                    <Box sx={{ minWidth: '15%' }}>
+                    <Box sx={{ minWidth: '15%', marginLeft: '1rem' }}>
                         {
                             isSellingSomeMode
                                 ? <Box sx={{display: 'flex', height: '100%', justifyContent: 'space-between'}}>
                                     <ButtonSelling
                                         isSelling={false}
                                         onClick={() => setIsSellingMenuOpened(true)}
-                                        disabled={!(sellingCaps.length)}
-                                        isEnable={sellingCaps.length}>
+                                        disabled={!(sellingItems.length)}
+                                        isEnable={sellingItems.length}>
                                         Продать
                                     </ButtonSelling>
                                     <ButtonSelling
@@ -274,8 +321,8 @@ function InventoryPage() {
                                 : <ButtonSelling
                                     isSelling={isSellingSomeMode}
                                     onClick={() => setIsSellingSomeMode(!isSellingSomeMode)}
-                                    disabled={!caps}
-                                    isEnable={caps}>
+                                    disabled={!items}
+                                    isEnable={items}>
                                     Продать несколько
                                 </ButtonSelling>
                         }
@@ -293,12 +340,12 @@ function InventoryPage() {
                 }
                 <Typography sx={{textAlign: 'center', marginTop: '1rem', fontWeight: 'bold'}}>
                     {
-                        isSellingSomeMode && 'Выберите несколько для продажи'
+                        isSellingSomeMode && 'Выберите предметы для продажи'
                     }
                 </Typography>
                 
                 {
-                    caps
+                    !isLoading && sortedFilteredItems
                         ? <Box sx={{
                             display: 'flex',
                             background: 'white',
@@ -308,31 +355,31 @@ function InventoryPage() {
                             margin: 'auto'
                         }}>
                             {
-                                caps.map((c: any) => <CapBlock
+                                sortedFilteredItems.map((c: any) => <ItemBlock
                                     key={c.id}
                                     id={c.id}
+                                    type={c.type}
                                     name={c.name}
                                     bundle={c.bundle}
-                                    frontImage={c.frontImage}
-                                    backImage={c.backImage}
+                                    image={c.image}
                                     date={c.date}
                                     points={c.points}
                                     cost={c.cost}
                                     uid={uid}
                                     rare={c.rare}
                                     isSellingMode={isSellingSomeMode}
-                                    addCapToSelling={(cap: ICapToSell) =>
-                                        addCapToSelling(cap)}
-                                    removeCapToSelling={(idCap: string) =>
-                                        removeCapToSelling(idCap)}
+                                    addItemToSelling={(cap: IInvItemToSell) =>
+                                        addItemToSelling(cap)}
+                                    removeItemToSelling={(idCap: string) =>
+                                        removeItemToSelling(idCap)}
                                     openModal={(uid: string, id: string, cost: number) => 
                                         openModalSelling(uid, id, cost)} />)
                             }
-                            <EmptyCapBlock />
-                            <EmptyCapBlock />
-                            <EmptyCapBlock />
-                            <EmptyCapBlock />
-                            <EmptyCapBlock />
+                            <EmptyItemBlock />
+                            <EmptyItemBlock />
+                            <EmptyItemBlock />
+                            <EmptyItemBlock />
+                            <EmptyItemBlock />
                         </Box>
                         : <Box sx={{
                             height: '50vh', 

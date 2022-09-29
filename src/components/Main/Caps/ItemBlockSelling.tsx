@@ -1,18 +1,25 @@
 import { default as s, default as styled } from 'styled-components';
-import { ICapToSell } from '../../../types/capsTypes';
+import { IInvItemToSell } from '../../../types/invItemTypes';
 
-const Cap = styled.div.attrs((props:any) => ({
-    frontImage: props.frontImage,
-    rare: props.rare
+const Item = styled.div.attrs((props:any) => ({
+    image: props.image,
+    rare: props.rare,
+    type: props.type
 }))`
-    background-image: url(${(props:any) => props.frontImage});
+    background-image: url(${(props:any) => props.image});
     background-position: center;
     background-size: cover;
     
     width: 100%;
     height: 100%;
 
-    border-radius: 50%;
+    border-radius: ${(props:any) => props.type === 'bundle' ? '5px' : '50%'};
+
+    ${
+        (props:any) => props.type === 'bundle'
+        ? 'border: solid 2px black;'
+        : 'border: none;'
+    }
     
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
 
@@ -49,20 +56,20 @@ const Block = styled.div.attrs((props:any) => ({
                                 : '#f09d13'
         };
 
-    &:hover ${Cap} {
+    &:hover ${Item} {
         transform: scale(1.2);
     }
 
 `
 
-function CapBlockSelling({cost, frontImage, id, name, rare}: ICapToSell) {
+function ItemBlockSelling({cost, image, id, name, rare, type}: IInvItemToSell) {
     return (
         <>
             <Block rare={rare}>
-                <Cap frontImage={frontImage} rare={rare} />
+                <Item image={image} rare={rare} type={type} />
             </Block>
         </>
     );
 }
 
-export default CapBlockSelling;
+export default ItemBlockSelling;

@@ -2,7 +2,7 @@ import { Divider, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { default as s, default as styled, keyframes } from 'styled-components';
-import { ICap, ICapToSell } from '../../../types/capsTypes';
+import { IInvItem, IInvItemToSell } from '../../../types/invItemTypes';
 
 const capAnimIn = keyframes`
     0%{
@@ -27,28 +27,25 @@ const capAnimOut = keyframes`
 `
 
 const Cap = styled.div.attrs((props:any) => ({
-    frontImage: props.frontImage,
+    image: props.image,
     rare: props.rare,
-    isOpenedMenu: props.isOpenedMenu
+    isOpenedMenu: props.isOpenedMenu,
+    type: props.type
 }))`
-    background-image: url(${(props:any) => props.frontImage});
+    background-image: url(${(props:any) => props.image});
     background-position: center;
     background-size: cover;
     
     width: 70%;
     height: 70%;
 
-    border-radius: 50%;
-    border: solid 0px ${
-    (props: any) =>
-        props.rare === 'Common' ? '#cfd3d4'
-            : props.rare === 'Uncommon' ? '#27ae61'
-                : props.rare === 'Rare' ? '#297fb8'
-                    : props.rare === 'Epic' ? '#8E44AD'
-                        : props.rare === 'Mythical' ? '#cf4137'
-                            : '#f09d13'
-    };
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    border-radius: ${(props:any) => props.type === 'bundle' ? '5px' : '50%'};
+
+    ${
+        (props:any) => props.type === 'bundle'
+        ? 'border: solid 2px black;'
+        : 'border: none;'
+    }
 
     animation: ${props => props.isOpenedMenu ? capAnimIn : capAnimOut} 0.3s ease;
     animation-fill-mode: forwards;
@@ -87,7 +84,7 @@ const Block = styled.div.attrs((props:any) => ({
     cursor: pointer;
 
     &:hover {
-        transform: ${(props:any) => !(props.isOpenedMenu) && 'scale(0.9);'}
+        transform: ${(props:any) => !(props.isOpenedMenu) && 'scale(1.1);'}
     }
 
 `
@@ -264,30 +261,19 @@ const BlockInfo = s.div`
 `
 
 interface ICapProps {
-    id: string;
-    name: string;
-    bundle: string;
-    frontImage: string;
-    backImage: string;
-    cost: number;
-    points: number;
-    rare: string;
     uid: string;
-    date: number;
     isSellingMode: boolean;
     openModal: (uid: string, id: string, cost: number) => void;
-    addCapToSelling: (cap: ICapToSell) => void;
-    removeCapToSelling: (id: string) => void;
+    addItemToSelling: (cap: IInvItemToSell) => void;
+    removeItemToSelling: (id: string) => void;
 }
 //обычный, необычный, редкий, эпический, мифический, легендарный,
 //common, uncommon, rare, epic, mythical, legendary
 
-function CapBlock({ 
-    id, name, frontImage, 
-    cost, points, rare, 
-    bundle, uid, date, 
-    isSellingMode, backImage,
-    openModal, addCapToSelling, removeCapToSelling }: ICapProps) {
+function InvItemBlock({ 
+    id, name, image, cost, points, rare, 
+    bundle, uid, date, isSellingMode, type,
+    openModal, addItemToSelling, removeItemToSelling }: ICapProps & IInvItem) {
 
     const [isOpenedMenu, setOpenedMenu] = useState(false);
     const [isSelectedToSell, setIsSelectedToSell] = useState(false);
@@ -296,16 +282,17 @@ function CapBlock({
         if(isSellingMode){
             
             if(!isSelectedToSell){
-                addCapToSelling({
+                addItemToSelling({
                     cost,
-                    frontImage,
+                    image,
                     id,
                     name,
-                    rare
+                    rare,
+                    type
                 });
             }
             else{
-                removeCapToSelling(id);
+                removeItemToSelling(id);
             }
             setIsSelectedToSell(!isSelectedToSell);
             
@@ -360,24 +347,52 @@ function CapBlock({
                     && <BlockInner isOpenedMenu={isOpenedMenu}>
                         <NameBlock rare={rare}>
                             <Typography>
-                                «{name}»
+                                {
+                                    type === 'bundle'
+                                    ? `«${bundle}»`
+                                    : `«${name}»`
+                                }
                             </Typography>
                             <Typography sx={{ fontSize: '12px', color: '#E5E7E9' }}>
-                                Фишка коллекции «{bundle}»
+                                {
+                                    type === 'bundle'
+                                    ? `Набор коллекции «${bundle}»`
+                                    : `Фишка коллекции «${bundle}»`
+                                }
                             </Typography>
                         </NameBlock>
                         <BlockInfo>
                             <Typography sx={{ fontSize: '14px' }}>
-                                Редкость: {stringRare}
+                                {
+                                    type !== 'bundle'
+                                    ? `Редкость: ${stringRare}`
+                                    : ``
+                                }
                             </Typography>
                             <Typography sx={{ fontSize: '14px' }}>
-                                Сила: {points}
+                                {
+                                    points
+                                    ? `Сила: ${points}`
+                                    : ``
+                                }
                             </Typography>
                             <Typography sx={{ fontSize: '14px' }}>
-                                Фишка получена: {stringDate}
+                                {
+                                    type === 'bundle'
+                                    ? `Набор получен: ${stringDate}`
+                                    : `Фишка получена: ${stringDate}`
+                                }
                             </Typography>
                         </BlockInfo>
                         <ButtonsBlock>
+                            {
+                                    type === 'bundle'
+                                        ? <>
+                                            <CapButton>Открыть</CapButton>
+                                            <Divider />
+                                        </>
+                                        : <></>
+                            }
                             <CapButton>Обменять</CapButton>
                             <Divider />
                             <CapButton onClick={() => openModal(uid, id, cost)}>Продать за
@@ -391,14 +406,11 @@ function CapBlock({
                     </BlockInner>
                 }
 
-                <Cap frontImage={frontImage} rare={rare} isOpenedMenu={isOpenedMenu} />
+                <Cap image={image} rare={rare} isOpenedMenu={isOpenedMenu} type={type} />
                 <BlockText rare={rare} isOpenedMenu={isOpenedMenu}> {name} </BlockText>
             </Block>
         </>
-        
-        
-
     );
 }
 
-export default CapBlock;
+export default InvItemBlock;

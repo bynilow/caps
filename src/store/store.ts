@@ -2,12 +2,12 @@ import { combineReducers } from 'redux';
 import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import userReducer from './slices/userSlice'
 import userSlice from './slices/userSlice';
-import capsSlice from './slices/capsSlice';
+import inventorySlice from './slices/inventorySlice';
 import createSagaMiddleware from 'redux-saga';
 
 export const rootReducer = combineReducers({
     user: userSlice.reducer,
-    caps: capsSlice.reducer
+    inventory: inventorySlice.reducer
 })
 
 export const setupStore = () => {

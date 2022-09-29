@@ -8,10 +8,10 @@ const Block = s.div`
 
 `
 
-function EmptyCapBlockSelling() {
+function EmptyItemBlockSelling() {
     return (
         <Block />
     );
 }
 
-export default EmptyCapBlockSelling;
+export default EmptyItemBlockSelling;
