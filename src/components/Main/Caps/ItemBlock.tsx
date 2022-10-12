@@ -2,7 +2,7 @@ import { Divider, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { default as s, default as styled, keyframes } from 'styled-components';
-import { IInvItem, IInvItemToSell } from '../../../types/invItemTypes';
+import { IInvItem, IInvItemToSell, IOpeningBundleModal } from '../../../types/invItemTypes';
 
 const capAnimIn = keyframes`
     0%{
@@ -263,9 +263,11 @@ const BlockInfo = s.div`
 interface ICapProps {
     uid: string;
     isSellingMode: boolean;
-    openModal: (uid: string, id: string, cost: number) => void;
+    openModalSelling: (uid: string, id: string, cost: number) => void;
     addItemToSelling: (cap: IInvItemToSell) => void;
     removeItemToSelling: (id: string) => void;
+    openOpeningBundleModal?: (bundle: IOpeningBundleModal) => void;
+    closeOpeningBundleModal?: () => void;
 }
 //обычный, необычный, редкий, эпический, мифический, легендарный,
 //common, uncommon, rare, epic, mythical, legendary
@@ -273,7 +275,8 @@ interface ICapProps {
 function InvItemBlock({ 
     id, name, image, cost, points, rare, 
     bundle, uid, date, isSellingMode, type,
-    openModal, addItemToSelling, removeItemToSelling }: ICapProps & IInvItem) {
+    openModalSelling, addItemToSelling, removeItemToSelling,
+    openOpeningBundleModal, closeOpeningBundleModal }: ICapProps & IInvItem) {
 
     const [isOpenedMenu, setOpenedMenu] = useState(false);
     const [isSelectedToSell, setIsSelectedToSell] = useState(false);
@@ -348,15 +351,13 @@ function InvItemBlock({
                         <NameBlock rare={rare}>
                             <Typography>
                                 {
-                                    type === 'bundle'
-                                    ? `«${bundle}»`
-                                    : `«${name}»`
+                                    name
                                 }
                             </Typography>
                             <Typography sx={{ fontSize: '12px', color: '#E5E7E9' }}>
                                 {
                                     type === 'bundle'
-                                    ? `Набор коллекции «${bundle}»`
+                                    ? `Набор фишек`
                                     : `Фишка коллекции «${bundle}»`
                                 }
                             </Typography>
@@ -386,16 +387,19 @@ function InvItemBlock({
                         </BlockInfo>
                         <ButtonsBlock>
                             {
-                                    type === 'bundle'
+                                    type === 'bundle' && openOpeningBundleModal
                                         ? <>
-                                            <CapButton>Открыть</CapButton>
+                                            <CapButton onClick={() => 
+                                                openOpeningBundleModal({id, uid, name, image, rare, bundle})}>
+                                                Открыть
+                                            </CapButton>
                                             <Divider />
                                         </>
                                         : <></>
                             }
                             <CapButton>Обменять</CapButton>
                             <Divider />
-                            <CapButton onClick={() => openModal(uid, id, cost)}>Продать за
+                            <CapButton onClick={() => openModalSelling(uid, id, cost)}>Продать за
                                 <Typography component="span" sx={{ fontWeight: '600', fontSize: 'inherit', lineHeight: '0' }}>
                                     {' ' + cost}c
                                 </Typography>

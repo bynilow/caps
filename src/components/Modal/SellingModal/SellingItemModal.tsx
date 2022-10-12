@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import s from 'styled-components'
 import { useTypedSelector } from '../../../hooks/useTypedSelector';
-import { sellItem, sellSomeItems } from '../../../store/action-creators/capsAC';
+import { sellItem, sellSomeItems } from '../../../store/action-creators/inventoryAC';
 import { IInvItem, IInvItemToSell } from '../../../types/invItemTypes';
 import Loader from '../../common/Loader';
 import SellingEndMessage from './SellingEndMessage';

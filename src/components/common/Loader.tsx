@@ -1,3 +1,4 @@
+import styled from 'styled-components';
 import s, { keyframes } from 'styled-components'
 
 const anim = keyframes`
@@ -12,17 +13,26 @@ const anim = keyframes`
     }
 `
 
-const LoaderDiv = s.div`
-    width: 2rem;
-    height: 2rem;
-    background: #2980B9;
+const LoaderDiv = styled.div.attrs((props:any) => ({
+    color: props.color,
+    size: props.size
+}))`
+    width: ${(props:any) => props.size}rem;
+    height: ${(props:any) => props.size}rem;
+    background: ${(props:any) => props.color};
     border-radius: 50%;
     animation: 1s ease ${anim} infinite;
+
 `
 
-function Loader() {
+interface ILoader {
+    color?: string;
+    size?: number;
+}
+
+function Loader({color = '#2980B9', size = 2}:ILoader) {
     return ( 
-        <LoaderDiv />
+        <LoaderDiv color={color} size={size} />
     );
 }
 

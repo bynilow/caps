@@ -5,13 +5,14 @@ import { useDispatch } from "react-redux";
 import styled from "styled-components";
 import s from 'styled-components';
 import { useTypedSelector } from "../../hooks/useTypedSelector";
-import { filterItems, findItems, getMyItems, sortItems } from "../../store/action-creators/capsAC";
-import { IInvItem, IInvItemToSell } from "../../types/invItemTypes";
+import { filterItems, findItems, getMyItems, sortItems } from "../../store/action-creators/inventoryAC";
+import { IInvItem, IInvItemToSell, IOpeningBundleModal } from "../../types/invItemTypes";
 import { FILTER_ALL_ITEMS, FILTER_ONLY_BUNDLES, FILTER_ONLY_CAPS, SORT_BY_BUNDLE, SORT_BY_NAME, SORT_CHEAP_FIRST, SORT_COMMON_FIRST, SORT_EXPENSIVE_FIRST, SORT_NEW_FIRST, SORT_OLD_FIRST, SORT_RARE_FIRST } from "../../utils/consts";
 import Loader from "../common/Loader";
 import SellingItemModal from "../Modal/SellingModal/SellingItemModal";
 import ItemBlock from "./Caps/ItemBlock";
 import EmptyItemBlock from "./Caps/EmptyItemBlock";
+import OpeningBundleModal from "../Modal/OpeningBundle/OpeningBundleModal";
 
 
 function getRandomInt(max: number) {
@@ -93,6 +94,16 @@ function InventoryPage() {
 
     const [findText, setFindText] = useState('');
 
+    const [isOpeningBundle, setOpeningBundle] = useState<IOpeningBundleModal>({
+        openedModal: false,
+        id: '',
+        image: '',
+        name: '',
+        rare: '',
+        uid: '',
+        bundle: ''
+    });
+
     // const getAllCaps = async() => {
     //     const querySnapshot = await getDocs(collection(db, "caps_shrek_1"));
     //     let arr:any[] = [];
@@ -106,35 +117,35 @@ function InventoryPage() {
     // }
     
     const addItemToUser = async(isBundle: boolean) => {
-            const capRef = await doc(db, "caps_shrek_1", `${isBundle ? `b_shrek_1` : `c_shrek_${getRandomInt(12)}` }`);
-            const capSnap = await getDoc(capRef);
-    
-            const docRef = doc(db, "users", uid);
-            const docSnap = await getDoc(docRef);
+        const capRef = await doc(db, "caps_shrek_1", `${isBundle ? `b_shrek_1` : `c_shrek_${getRandomInt(12)}`}`);
+        const capSnap = await getDoc(capRef);
 
-            const timestamp = await Date.parse(Timestamp.now().toDate().toISOString());
-            
-            if(docSnap.data()?.items){
-                let myCaps = docSnap.data()?.items;
-                myCaps.push({
-                    ...capSnap.data(), 
-                    date: timestamp, 
-                    id: capSnap.data()?.id + `_${Date.now()}`
-                });
-                const updatedRes = await updateDoc(doc(db,"users", uid),{
-                    items: myCaps
-                })
-            }
-            else{
-                let myCaps = {
-                    ...capSnap.data(), 
-                    date: timestamp, 
-                    id: capSnap.data()?.id + `_${Date.now()}`
-                };
-                await setDoc(doc(db,"users", uid),{
-                    items: [myCaps]
-                })
-            }
+        const docRef = doc(db, "users", uid);
+        const docSnap = await getDoc(docRef);
+
+        const timestamp = await Date.parse(Timestamp.now().toDate().toISOString());
+
+        if (docSnap.data()?.items) {
+            let myCaps = docSnap.data()?.items;
+            myCaps.push({
+                ...capSnap.data(),
+                date: timestamp,
+                id: capSnap.data()?.id + `_${Date.now()}`
+            });
+            const updatedRes = await updateDoc(doc(db, "users", uid), {
+                items: myCaps
+            })
+        }
+        else {
+            let myCaps = {
+                ...capSnap.data(),
+                date: timestamp,
+                id: capSnap.data()?.id + `_${Date.now()}`
+            };
+            await setDoc(doc(db, "users", uid), {
+                items: [myCaps]
+            })
+        }
     }
     
 
@@ -156,6 +167,14 @@ function InventoryPage() {
         })
         //-200, -300, -700, -1000, -1500, -5000
         //10-50, -70, -300, -500, -1000, -3000
+    }
+
+    const openModalOpeningBundle = ({id, image, name, rare, uid, bundle}: IOpeningBundleModal) => {
+        setOpeningBundle({openedModal: true, id, uid, image, name, rare, bundle});
+    }
+
+    const closeModalOpeningBundle = () => {
+        setOpeningBundle({openedModal: false, id: '', uid: '', image: '', name: '', rare: '', bundle: ''})
     }
 
     const openModalSelling = (uid: string, id: string, cost: number) => {
@@ -221,6 +240,18 @@ function InventoryPage() {
                     setSellingItems={() => setSellingItems([])}
                     closeModal={closeModalSelling} />
                 : <></>
+            }
+            {
+                isOpeningBundle.openedModal
+                    ? <OpeningBundleModal
+                        id={isOpeningBundle.id}
+                        uid={uid}
+                        image={isOpeningBundle.image}
+                        name={isOpeningBundle.name}
+                        rare={isOpeningBundle.rare}
+                        bundle={isOpeningBundle.bundle}
+                        closeModal={closeModalOpeningBundle} />
+                    : <></>
             }
             <Container>
                 <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
@@ -372,8 +403,11 @@ function InventoryPage() {
                                         addItemToSelling(cap)}
                                     removeItemToSelling={(idCap: string) =>
                                         removeItemToSelling(idCap)}
-                                    openModal={(uid: string, id: string, cost: number) => 
-                                        openModalSelling(uid, id, cost)} />)
+                                    openModalSelling={(uid: string, id: string, cost: number) => 
+                                        openModalSelling(uid, id, cost)}
+                                    openOpeningBundleModal={(bundle: IOpeningBundleModal) => 
+                                        openModalOpeningBundle(bundle)}
+                                    closeOpeningBundleModal={closeModalOpeningBundle} />)
                             }
                             <EmptyItemBlock />
                             <EmptyItemBlock />

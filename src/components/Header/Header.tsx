@@ -132,7 +132,11 @@ function Header() {
                             </ButtonHeader>
                             <AvatarOuter>
                                 <AvatarButton photoUrl={photoURL}>
-                                    {displayName && displayName[0]}
+                                    {displayName
+                                        ? photoURL
+                                            ? ''
+                                            : displayName[0]
+                                        : ''}
                                 </AvatarButton>
                                 <AvatarBlock>
                                     <Box sx={{ padding: '0.5rem' }}>
@@ -166,8 +170,6 @@ function Header() {
                         : <ButtonHeader >Вход</ButtonHeader>
                 }
             </ContainerHeader>
-
-
         </Box>
     );
 }

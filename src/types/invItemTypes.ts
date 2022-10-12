@@ -35,3 +35,13 @@ export interface ISellCapAction {
     cost: number;
     capId: string;
 }
+
+export interface IOpeningBundleModal {
+    openedModal?: boolean,
+    id: string;
+    uid: string;
+    image: string;
+    name: string;
+    rare: string;
+    bundle: string;
+}

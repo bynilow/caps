@@ -1,10 +1,13 @@
-import { doc, getDoc, getFirestore, increment, setDoc, Timestamp, updateDoc, orderBy } from "firebase/firestore";
+import { doc, getDoc, getFirestore, increment, setDoc, Timestamp, updateDoc, orderBy, getDocs, collection } from "firebase/firestore";
 import { IInvItem, IInvItemToSell } from "../../types/invItemTypes";
 import { SORT_NEW_FIRST, SORT_OLD_FIRST, SORT_BY_NAME, SORT_BY_BUNDLE, SORT_COMMON_FIRST, SORT_RARE_FIRST, SORT_EXPENSIVE_FIRST, SORT_CHEAP_FIRST, FILTER_ALL_ITEMS, FILTER_ONLY_CAPS, FILTER_ONLY_BUNDLES } from "../../utils/consts";
 import inventorySlice from "../slices/inventorySlice";
 import userSlice from "../slices/userSlice";
 import { AppDispatch } from "../store";
 
+function getRandomInt(max: number) {
+    return Math.floor(Math.random() * (max))
+}
 
 export const getMyItems = (uid: string) => {
     return async (dispatch: AppDispatch) => {
@@ -228,6 +231,135 @@ export const findItems = (name: string, items: IInvItem[] ) => {
 
             dispatch(inventorySlice.actions.setLoading(false));
         } catch (e: any) {
+            console.log(e);
+            dispatch(inventorySlice.actions.setError(e.message));
+            dispatch(inventorySlice.actions.setLoading(false));
+        }
+    }
+}
+
+export const setItemsInBundle = (bundle: string, id: string) => {
+    return async (dispatch: AppDispatch) => {
+        try{
+            dispatch(inventorySlice.actions.setLoading(true));
+
+            const db = getFirestore();
+            const q = await getDocs(collection(db, bundle));
+            const capsInBundle: any[] = [];
+            q.forEach(doc => doc.data().type !== 'bundle' ? capsInBundle.push(doc.data()) : null);
+            const sortingArr = ['Common', 'Uncommon', 'Rare', 'Epic', 'Mythical', 'Legendary']
+            const sortedArr = [...capsInBundle].sort((a, b) =>
+            sortingArr.indexOf(a.rare) - sortingArr.indexOf(b.rare));
+            dispatch(inventorySlice.actions.setItemsInBundle(sortedArr))
+
+            dispatch(inventorySlice.actions.setLoading(false));
+
+        }
+        catch (e:any){
+            console.log(e);
+            dispatch(inventorySlice.actions.setError(e.message));
+            dispatch(inventorySlice.actions.setLoading(false));
+        }
+    }
+}
+
+export const openBundle = (idBundle: string, uid: string, caps: IInvItem[]) => {
+    return async (dispatch: AppDispatch) => {
+        try {
+            dispatch(inventorySlice.actions.setLoading(true));
+
+            /// Common - 35%
+            /// Uncommon - 30%
+            /// Rare - 15% 
+            /// Epic - 10% 
+            /// Mythical - 7% 
+            /// Legendary - 3% 
+            
+            
+            let myCaps = [];
+
+            for(let i = 0; i < 5; i++){
+                const timestamp = await Date.parse(Timestamp.now().toDate().toISOString());
+                let selectedRare = '';
+                const randomNum = Math.round(Math.random()*100);
+                if(randomNum >= 0 && randomNum <= 40) selectedRare = 'Common';
+                if(randomNum > 40 && randomNum <= 65) selectedRare = 'Uncommon';
+                if(randomNum > 65 && randomNum <= 80) selectedRare = 'Rare';
+                if(randomNum > 80 && randomNum <= 90) selectedRare = 'Epic';
+                if(randomNum > 90 && randomNum <= 97) selectedRare = 'Mythical';
+                if(randomNum > 97 && randomNum <= 100) selectedRare = 'Legendary';
+                // if(randomNum >= 0 && randomNum <= 1) selectedRare = 'Common';
+                // if(randomNum > 1 && randomNum <= 2) selectedRare = 'Uncommon';
+                // if(randomNum > 2 && randomNum <= 3) selectedRare = 'Rare';
+                // if(randomNum > 3 && randomNum <= 4) selectedRare = 'Epic';
+                // if(randomNum > 5 && randomNum <= 6) selectedRare = 'Mythical';
+                // if(randomNum > 7 && randomNum <= 100) selectedRare = 'Legendary';
+
+                const newCaps: IInvItem[] = JSON.parse(JSON.stringify(caps));
+                
+                const capsWithRare = newCaps.filter(c => c.rare === selectedRare) || caps[0];
+                const randomItemInd = getRandomInt(capsWithRare.length);
+                const recievedItem = capsWithRare[randomItemInd];
+                myCaps.push({
+                    ...recievedItem, 
+                    date: timestamp,
+                    id: recievedItem.id + `_${Date.now() + Math.floor(Math.random()*100)}`
+                });
+            }
+            
+            
+
+            const db = getFirestore();
+
+            const docRef = doc(db, "users", uid);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.data()?.items) {
+                let myCapsFromDb = (docSnap.data()?.items).filter((i:IInvItem) => i.id !== idBundle);
+                console.log(myCapsFromDb)
+                console.log(myCaps)
+                const concatedCaps = myCapsFromDb.concat(myCaps);
+                console.log(concatedCaps)
+
+                const updatedRes = await updateDoc(doc(db, "users", uid), {
+                    items: concatedCaps
+                })
+                dispatch(inventorySlice.actions.setItems(concatedCaps))
+                dispatch(inventorySlice.actions.setSortedFilteredItems(concatedCaps))
+            }
+            else {
+                await setDoc(doc(db, "users", uid), {
+                    items: [myCaps]
+                })
+                dispatch(inventorySlice.actions.setItems(myCaps))
+                dispatch(inventorySlice.actions.setSortedFilteredItems(myCaps))
+            }
+
+            
+            dispatch(inventorySlice.actions.setRecievedCaps(myCaps));
+
+            // const db = getFirestore();
+            // const capRef = doc(db, "caps_shrek_1", `c_shrek_${getRandomInt(12)}`);
+            // const capSnap = await getDoc(capRef);
+
+            // const docRef = doc(db, "users", uid);
+            // const docSnap = await getDoc(docRef);
+
+            // if (docSnap.data()) {
+            //     let myCaps = docSnap.data()?.items;
+            //     myCaps.push({ capSnap.data(), });
+            //     const updatedRes = await updateDoc(doc(db, "users", uid), {
+            //         items: myCaps
+            //     })
+            // }
+            // else {
+            //     await setDoc(doc(db, "users", uid), {
+            //         items: [capSnap.data()]
+            //     })
+            // }
+
+            dispatch(inventorySlice.actions.setLoading(false));
+        } catch (e:any) {
             console.log(e);
             dispatch(inventorySlice.actions.setError(e.message));
             dispatch(inventorySlice.actions.setLoading(false));
