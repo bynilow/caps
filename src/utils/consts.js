@@ -14,3 +14,8 @@ export const SORT_CHEAP_FIRST = 'SORT_CHEAP_FIRST';
 export const FILTER_ALL_ITEMS = 'FILTER_ALL_ITEMS';
 export const FILTER_ONLY_CAPS = 'FILTER_ONLY_CAPS';
 export const FILTER_ONLY_BUNDLES = 'FILTER_ONLY_BUNDLES';
+
+export const BUNDLES_NAMES = [
+    'caps_shrek_1',
+    'caps_pokemon_1'
+]

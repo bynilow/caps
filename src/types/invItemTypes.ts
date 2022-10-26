@@ -45,3 +45,13 @@ export interface IOpeningBundleModal {
     rare: string;
     bundle: string;
 }
+
+export interface IIsBuying {
+    isOpened?: boolean;
+    uid: string;
+    bundleName: string;
+    bundleId: string;
+    image: string;
+    name: string;
+    price: number;
+}

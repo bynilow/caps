@@ -15,7 +15,7 @@ const BlockInfo = s.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10001;
+    z-index: 99999;
 `
 
 const ListCaps = s.div`

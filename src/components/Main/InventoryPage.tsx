@@ -1,4 +1,4 @@
-import { Box, Button, Divider, MenuItem, Select, SelectChangeEvent, TextField, Typography } from "@mui/material";
+import { Box, Button, Checkbox, Divider, FormControlLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography } from "@mui/material";
 import { collection, doc, getDoc, getDocs, getFirestore, setDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -89,6 +89,16 @@ function InventoryPage() {
     const [sellingItems, setSellingItems] = useState<IInvItemToSell[]>([]);
     const [isSellingSomeMode, setIsSellingSomeMode] = useState<boolean>(false);
 
+    const [isCommonSelected, setIsCommonSelected] = useState<boolean>(false);
+    const [isUncommonSelected, setIsUncommonSelected] = useState<boolean>(false);
+    const [isRareSelected, setIsRareSelected] = useState<boolean>(false);
+    const [isEpicSelected, setIsEpicSelected] = useState<boolean>(false);
+    const [isMythicalSelected, setIsMythicalSelected] = useState<boolean>(false);
+    const [isLegendarySelected, setIsLegendarySelected] = useState<boolean>(false);
+    const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
+    const [isCapsSelected, setIsCapsSelected] = useState<boolean>(true);
+    const [isBundlesSelected, setIsBundlesSelected] = useState<boolean>(false);
+
     const [filter, setFilter] = useState(FILTER_ALL_ITEMS);
     const [sorting, setSorting] = useState(SORT_NEW_FIRST);
 
@@ -117,7 +127,7 @@ function InventoryPage() {
     // }
     
     const addItemToUser = async(isBundle: boolean) => {
-        const capRef = await doc(db, "caps_shrek_1", `${isBundle ? `b_shrek_1` : `c_shrek_${getRandomInt(12)}`}`);
+        const capRef = await doc(db, "caps_pokemon_1", `${isBundle ? `b_pokemon_1` : `c_pokemon_${getRandomInt(12)}`}`);
         const capSnap = await getDoc(capRef);
 
         const docRef = doc(db, "users", uid);
@@ -155,19 +165,22 @@ function InventoryPage() {
     }, [uid])
 
     const addCap = async() => {
-        await setDoc(doc(db,"caps_shrek_1","c_shrek_12"),{
-            id: "c_shrek_12",
-            name: "Кот в сапогах",
-            bundle: "Шрек",
-            frontImage: "https://funart.pro/uploads/posts/2021-07/1626545290_6-funart-pro-p-kot-v-sapogakh-glaza-zhivotnie-krasivo-fot-12.jpg",
-            backImage: "https://proprikol.ru/wp-content/uploads/2019/08/kartinki-na-zadnij-fon-38.jpg",
-            cost: 430,
-            points: 950,
-            rare: "Epic"
+        await setDoc(doc(db,"caps_pokemon_1","b_pokemon_1"),{
+            id: "b_pokemon_1",
+            name: "Набор Покемоны",
+            bundle: "caps_pokemon_1",
+            image: "https://ns-on.ru/wp-content/uploads/2019/11/065e5e9239f7d492dc3d64e57e84d6ed.jpg",
+            cost: 1435,
+            price: 1100,
+            // points: 4300,
+            rare: "Common",
+            type: "bundle"
         })
-        //-200, -300, -700, -1000, -1500, -5000
-        //10-50, -70, -300, -500, -1000, -3000
+        /// 16, 33, 108, 309, 733, 1505
+        /// 48, 99, 324, 927, 2199, 4515
     }
+
+    // addCap()
 
     const openModalOpeningBundle = ({id, image, name, rare, uid, bundle}: IOpeningBundleModal) => {
         setOpeningBundle({openedModal: true, id, uid, image, name, rare, bundle});
@@ -188,8 +201,10 @@ function InventoryPage() {
     }
 
     const onFilterChange = (e: SelectChangeEvent) => { /////////при сортировке или фильтрации не учитывается
-        dispatch<any>(filterItems(items, e.target.value))
-        setFilter(e.target.value)
+        dispatch<any>(filterItems(items, e.target.value));
+        setFilter(e.target.value);
+        setSorting(SORT_NEW_FIRST);
+        setFindText('');
     }
 
     const onSortingChange = (e: SelectChangeEvent) => {
@@ -214,6 +229,17 @@ function InventoryPage() {
     const cancelSomeSelling = () => {
         setSellingItems([]);
         setIsSellingSomeMode(false);
+
+        setIsAllSelected(false);
+        setIsCommonSelected(false);
+        setIsUncommonSelected(false);
+        setIsRareSelected(false);
+        setIsEpicSelected(false);
+        setIsMythicalSelected(false);
+        setIsLegendarySelected(false);
+        setIsCapsSelected(true);
+        setIsBundlesSelected(false);
+
     }
 
     const onFindTextChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,6 +248,133 @@ function InventoryPage() {
 
     const onFindTextKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if(e.keyCode === 13) dispatch<any>(findItems(findText, items))
+    }
+
+    const changeSomeSelection = (rare: string, isSelected: boolean) => {
+        if (isSelected) {
+            console.log(isBundlesSelected)
+            let newItems = JSON.parse(JSON.stringify(sellingItems))
+                .concat(items.filter((i: IInvItem) =>
+                    i.rare === rare &&
+                    !(sellingItems.find(ii => ii.id === i.id)) &&
+                    (isBundlesSelected ? true : i.type !== 'bundle') && 
+                    (isCapsSelected ? true : i.type !== 'caps')));
+            setSellingItems(newItems);
+        }
+        else {
+            let newItems = JSON.parse(JSON.stringify(sellingItems)).filter((i: IInvItem) => i.rare !== rare);
+            setSellingItems(newItems);
+        } 
+    }
+
+    const onClickCheckboxSelectRare = (rare: string) => {
+        switch (rare) {
+            case 'Common':
+                setIsCommonSelected(!isCommonSelected);
+                setIsAllSelected(
+                    !isCommonSelected && 
+                    isUncommonSelected && 
+                    isRareSelected && 
+                    isEpicSelected && 
+                    isMythicalSelected && 
+                    isLegendarySelected);
+                changeSomeSelection('Common', !isCommonSelected);
+                break;
+                
+            case 'Uncommon':
+                setIsUncommonSelected(!isUncommonSelected);
+                setIsAllSelected(
+                    isCommonSelected && 
+                    !isUncommonSelected && 
+                    isRareSelected && 
+                    isEpicSelected && 
+                    isMythicalSelected && 
+                    isLegendarySelected);
+                changeSomeSelection('Uncommon', !isUncommonSelected);
+                break;
+            case 'Rare':
+                setIsRareSelected(!isRareSelected);
+                setIsAllSelected(
+                    isCommonSelected && 
+                    isUncommonSelected && 
+                    !isRareSelected && 
+                    isEpicSelected && 
+                    isMythicalSelected && 
+                    isLegendarySelected);
+                changeSomeSelection('Rare', !isRareSelected);
+                break;
+            case 'Epic':
+                setIsEpicSelected(!isEpicSelected);
+                setIsAllSelected(
+                    isCommonSelected && 
+                    isUncommonSelected && 
+                    isRareSelected && 
+                    !isEpicSelected && 
+                    isMythicalSelected && 
+                    isLegendarySelected);
+                changeSomeSelection('Epic', !isEpicSelected);
+                break;
+            case 'Mythical':
+                setIsMythicalSelected(!isMythicalSelected);
+                setIsAllSelected(
+                    isCommonSelected && 
+                    isUncommonSelected && 
+                    isRareSelected && 
+                    isEpicSelected && 
+                    !isMythicalSelected && 
+                    isLegendarySelected);
+                changeSomeSelection('Mythical', !isMythicalSelected);
+                break;
+            case 'Legendary':
+                setIsLegendarySelected(!isLegendarySelected);
+                setIsAllSelected(
+                    isCommonSelected && 
+                    isUncommonSelected && 
+                    isRareSelected && 
+                    isEpicSelected && 
+                    isMythicalSelected && 
+                    !isLegendarySelected);
+                changeSomeSelection('Legendary', !isLegendarySelected);
+                break;
+            case 'All':
+                setIsAllSelected(!isAllSelected);
+                setIsCommonSelected(!isAllSelected);
+                setIsUncommonSelected(!isAllSelected);
+                setIsRareSelected(!isAllSelected);
+                setIsEpicSelected(!isAllSelected);
+                setIsMythicalSelected(!isAllSelected);
+                setIsLegendarySelected(!isAllSelected);
+                setSellingItems(!isAllSelected
+                    ? items.filter((i: IInvItem) =>
+                        (isBundlesSelected ? true : i.type !== 'bundle') &&
+                        (isCapsSelected ? true : i.type !== 'caps'))
+                    : []);
+                break;
+            case 'Caps':
+                setIsCapsSelected(!isCapsSelected);
+                setIsAllSelected(false);
+                setIsCommonSelected(false);
+                setIsUncommonSelected(false);
+                setIsRareSelected(false);
+                setIsEpicSelected(false);
+                setIsMythicalSelected(false);
+                setIsLegendarySelected(false);
+                setSellingItems([]);
+                break;
+            case 'Bundles':
+                setIsBundlesSelected(!isBundlesSelected);
+                setIsAllSelected(false);
+                setIsCommonSelected(false);
+                setIsUncommonSelected(false);
+                setIsRareSelected(false);
+                setIsEpicSelected(false);
+                setIsMythicalSelected(false);
+                setIsLegendarySelected(false);
+                setSellingItems([]);
+                break;
+            default:
+                break;
+        }
     }
 
     return ( 
@@ -369,11 +522,78 @@ function InventoryPage() {
                         : <></>
                     
                 }
-                <Typography sx={{textAlign: 'center', marginTop: '1rem', fontWeight: 'bold'}}>
-                    {
-                        isSellingSomeMode && 'Выберите предметы для продажи'
-                    }
-                </Typography>
+                {
+                    isSellingSomeMode
+                        ? <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '1rem 0'}}>
+                            <Typography sx={{marginRight: '10%'}}>
+                                Искать уровень редкости:
+                            </Typography>
+                            <Box>
+                                <Box sx={{display: 'flex', flexWrap: 'wrap'}}>
+                                    <FormControlLabel
+                                        control={<Checkbox 
+                                            name="com"
+                                            checked={isCommonSelected} 
+                                            onChange={() => onClickCheckboxSelectRare('Common')} />}
+                                        label="Обычные" />
+                                    <FormControlLabel
+                                        control={<Checkbox 
+                                            name="unc"
+                                            checked={isUncommonSelected} 
+                                            onChange={() => onClickCheckboxSelectRare('Uncommon')} />}
+                                        label="Необычные" />
+                                    <FormControlLabel
+                                        control={<Checkbox 
+                                            checked={isRareSelected} 
+                                            onChange={() => onClickCheckboxSelectRare('Rare')} />}
+                                        label="Редкие" />
+                                    <FormControlLabel
+                                        control={<Checkbox 
+                                            checked={isEpicSelected} 
+                                            onChange={() => onClickCheckboxSelectRare('Epic')} />}
+                                        label="Эпические" />
+                                    <FormControlLabel
+                                        control={<Checkbox 
+                                            checked={isMythicalSelected} 
+                                            onChange={() => onClickCheckboxSelectRare('Mythical')} />}
+                                        label="Мифические" />
+                                    <FormControlLabel
+                                        control={<Checkbox 
+                                            checked={isLegendarySelected} 
+                                            onChange={() => onClickCheckboxSelectRare('Legendary')} />}
+                                        label="Легендарные" />
+                                </Box>
+                                <Box>
+                                    <FormControlLabel
+                                        control={<Checkbox
+                                            checked={isAllSelected}
+                                            onChange={() => onClickCheckboxSelectRare('All')} />}
+                                        label="Все" />
+                                </Box>
+                                <Box>
+                                    <Typography>
+                                        Выбрать тип выделяемых предметов:
+                                    </Typography>
+                                    <FormControlLabel
+                                        control={<Checkbox
+                                            checked={isCapsSelected}
+                                            onChange={() => onClickCheckboxSelectRare('Caps')} />}
+                                        label="Фишки" />
+                                    <FormControlLabel
+                                        control={<Checkbox
+                                            checked={isBundlesSelected}
+                                            onChange={() => onClickCheckboxSelectRare('Bundles')} />}
+                                        label="Наборы" />
+                                </Box>
+                                <Typography sx={{marginRight: '10%'}}>
+                                    Выберите предметы для продажи:
+                                </Typography>
+
+                            </Box>
+                        </Box>
+                        : <></>
+                }
+                
                 
                 {
                     !isLoading && sortedFilteredItems
@@ -383,7 +603,7 @@ function InventoryPage() {
                             justifyContent: 'space-around',
                             flexWrap: 'wrap',
                             height: '100%',
-                            margin: 'auto'
+                            marginTop: '1rem'
                         }}>
                             {
                                 sortedFilteredItems.map((c: any) => <ItemBlock
@@ -398,6 +618,7 @@ function InventoryPage() {
                                     cost={c.cost}
                                     uid={uid}
                                     rare={c.rare}
+                                    isSelected={!!(sellingItems.find(i => i.id === c.id))}
                                     isSellingMode={isSellingSomeMode}
                                     addItemToSelling={(cap: IInvItemToSell) =>
                                         addItemToSelling(cap)}

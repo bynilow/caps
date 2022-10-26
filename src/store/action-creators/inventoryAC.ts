@@ -124,10 +124,12 @@ export const sellSomeItems = (items: IInvItemToSell[], uid: string) => {
     }
 }
 
-export const sortItems = (items: IInvItem[], method:string ) => {
+export const sortItems = (items: IInvItem[], method:string) => {
     return async (dispatch: AppDispatch) => {
         try {
-            dispatch(inventorySlice.actions.setLoading(true))            
+            dispatch(inventorySlice.actions.setLoading(true))
+            
+            dispatch(inventorySlice.actions.setSorting(method))
             switch (method) {
                 case SORT_NEW_FIRST:{
                     const sortedArr = [...items].sort((a,b) => b.date - a.date);
@@ -176,8 +178,7 @@ export const sortItems = (items: IInvItem[], method:string ) => {
                 default:
                     break;
             }
-            console.log('after', items)
-
+               
             dispatch(inventorySlice.actions.setLoading(false))
         } catch (e: any) {
             console.log(e)
@@ -190,7 +191,9 @@ export const sortItems = (items: IInvItem[], method:string ) => {
 export const filterItems = (items: IInvItem[], method:string ) => {
     return async (dispatch: AppDispatch) => {
         try {
-            dispatch(inventorySlice.actions.setLoading(true))            
+            dispatch(inventorySlice.actions.setLoading(true))     
+
+            dispatch(inventorySlice.actions.setFilter(method))         
             switch (method) {
                 case FILTER_ALL_ITEMS:{
                     dispatch(inventorySlice.actions.setSortedFilteredItems(items));
@@ -206,12 +209,10 @@ export const filterItems = (items: IInvItem[], method:string ) => {
                     dispatch(inventorySlice.actions.setSortedFilteredItems(sortedArr));
                     break;
                 }
-                
                 default:
                     break;
             }
-            console.log('after', items)
-
+            
             dispatch(inventorySlice.actions.setLoading(false))
         } catch (e: any) {
             console.log(e)
@@ -275,7 +276,6 @@ export const openBundle = (idBundle: string, uid: string, caps: IInvItem[]) => {
             /// Mythical - 7% 
             /// Legendary - 3% 
             
-            
             let myCaps = [];
 
             for(let i = 0; i < 5; i++){
@@ -288,12 +288,6 @@ export const openBundle = (idBundle: string, uid: string, caps: IInvItem[]) => {
                 if(randomNum > 80 && randomNum <= 90) selectedRare = 'Epic';
                 if(randomNum > 90 && randomNum <= 97) selectedRare = 'Mythical';
                 if(randomNum > 97 && randomNum <= 100) selectedRare = 'Legendary';
-                // if(randomNum >= 0 && randomNum <= 1) selectedRare = 'Common';
-                // if(randomNum > 1 && randomNum <= 2) selectedRare = 'Uncommon';
-                // if(randomNum > 2 && randomNum <= 3) selectedRare = 'Rare';
-                // if(randomNum > 3 && randomNum <= 4) selectedRare = 'Epic';
-                // if(randomNum > 5 && randomNum <= 6) selectedRare = 'Mythical';
-                // if(randomNum > 7 && randomNum <= 100) selectedRare = 'Legendary';
 
                 const newCaps: IInvItem[] = JSON.parse(JSON.stringify(caps));
                 
@@ -307,8 +301,6 @@ export const openBundle = (idBundle: string, uid: string, caps: IInvItem[]) => {
                 });
             }
             
-            
-
             const db = getFirestore();
 
             const docRef = doc(db, "users", uid);
@@ -334,29 +326,7 @@ export const openBundle = (idBundle: string, uid: string, caps: IInvItem[]) => {
                 dispatch(inventorySlice.actions.setItems(myCaps))
                 dispatch(inventorySlice.actions.setSortedFilteredItems(myCaps))
             }
-
-            
             dispatch(inventorySlice.actions.setRecievedCaps(myCaps));
-
-            // const db = getFirestore();
-            // const capRef = doc(db, "caps_shrek_1", `c_shrek_${getRandomInt(12)}`);
-            // const capSnap = await getDoc(capRef);
-
-            // const docRef = doc(db, "users", uid);
-            // const docSnap = await getDoc(docRef);
-
-            // if (docSnap.data()) {
-            //     let myCaps = docSnap.data()?.items;
-            //     myCaps.push({ capSnap.data(), });
-            //     const updatedRes = await updateDoc(doc(db, "users", uid), {
-            //         items: myCaps
-            //     })
-            // }
-            // else {
-            //     await setDoc(doc(db, "users", uid), {
-            //         items: [capSnap.data()]
-            //     })
-            // }
 
             dispatch(inventorySlice.actions.setLoading(false));
         } catch (e:any) {

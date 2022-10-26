@@ -4,10 +4,12 @@ import userReducer from './slices/userSlice'
 import userSlice from './slices/userSlice';
 import inventorySlice from './slices/inventorySlice';
 import createSagaMiddleware from 'redux-saga';
+import shopSlice from './slices/shopSlice';
 
 export const rootReducer = combineReducers({
     user: userSlice.reducer,
-    inventory: inventorySlice.reducer
+    inventory: inventorySlice.reducer,
+    shop: shopSlice.reducer
 })
 
 export const setupStore = () => {

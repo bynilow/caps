@@ -20,7 +20,7 @@ const BackgroundModal = s.div`
     height: 100%;
     background: rgba(0,0,0,0.85);
     backdrop-filter: blur(15px);
-    z-index: 10000;
+    z-index: 99999;
 `
 
 
@@ -46,7 +46,7 @@ function OpeningBundleModal({ id, uid, image, name, rare, bundle, closeModal }: 
     }
 
     return (
-        <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+        <Box sx={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center' }}>
             <BackgroundModal onClick={closeModal} />
             {
                 !isOpenedBundle 
@@ -58,7 +58,8 @@ function OpeningBundleModal({ id, uid, image, name, rare, bundle, closeModal }: 
                     rare={rare}
                     uid={uid}
                     itemsInBundle={itemsInBundle}
-                    onClickOpenBundle={onClickOpenBundle} />
+                    onClickOpenBundle={onClickOpenBundle}
+                    closeModal={closeModal} />
                 : recievedItems 
                     ? <OpeningRecievedItems caps={recievedItems} closeModal={closeModal} />
                     : <></>

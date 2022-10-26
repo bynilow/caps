@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import styled from "styled-components";
 import s from 'styled-components'
+import { IInvItem, IIsBuying } from "../../types/invItemTypes";
 
 const ImageBox = s.div`    
     height: auto;
@@ -10,7 +11,7 @@ const ImageBox = s.div`
 const Image = s.img`
     height: 100%;
     width: 100%;
-    object-fit: cover;
+    object-fit: contain;
 `
 
 const ButtonBuy = s.button`
@@ -31,6 +32,12 @@ const ButtonBuy = s.button`
     &:hover{
         background: #196F3D;
     }
+
+    &:disabled {
+        cursor: default;
+        background: #616A6B;
+        color: white;
+    }
 `
 
 const BlockItem = s.div`
@@ -49,19 +56,37 @@ const BlockItem = s.div`
 `
 
 
+interface IShopItem {
+    uid: string;
+    coins: number;
+    image: string;
+    name: string;
+    price: number;
+    bundleName: string;
+    bundleId: string;
+    onClickBuyItem: (item: IIsBuying) => void;
+}
 
-function ShopItem() {
+function ShopItem({uid, coins, image, name, price, bundleName, bundleId, onClickBuyItem}: IShopItem) {
+    
+    const onClickBuy = () => {
+        onClickBuyItem({uid, bundleId, image, name, price, bundleName})
+    }
+
     return ( 
         <BlockItem>
-
             <ImageBox>
-                <Image src={'https://m1.dogecdn.wtf/fields/brands/4_drinks/mirinda.svg'} />
+                <Image src={image} />
             </ImageBox>
                 <Typography sx={{ marginTop: '1rem', textAlign: 'center' }}>
-                    Шрек с ослом и фиона жена
+                    {name}
                 </Typography>
-                <ButtonBuy>
-                    Купить 500c.
+                <ButtonBuy onClick={onClickBuy} disabled={coins < price}>
+                    {
+                        coins < price
+                            ? `${price}c.`
+                            : `Купить ${price}c.`
+                    }
                 </ButtonBuy>
 
         </BlockItem>

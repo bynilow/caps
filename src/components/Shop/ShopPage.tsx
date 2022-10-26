@@ -1,8 +1,14 @@
 import { Box, Typography, Select, MenuItem, SelectChangeEvent, Button } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import s from 'styled-components';
+import { useAppDispatch } from "../../hooks/useAppDispatch";
+import { useTypedSelector } from "../../hooks/useTypedSelector";
+import { setBundles } from "../../store/action-creators/shopAC";
+import { IInvItem, IIsBuying } from "../../types/invItemTypes";
 import { SORT_CHEAP_FIRST, SORT_EXPENSIVE_FIRST } from "../../utils/consts";
+import Loader from "../common/Loader";
+import BuyingItemModal from "../Modal/BuyingModal/BuyingItemModal";
 import ShopItem from "./ShopItem";
 
 const Container = s.div`
@@ -87,7 +93,36 @@ const SortingBlock = s.div`
 
 function ShopPage() {
 
+    const {coins} = useTypedSelector(state => state.user);
+    const {uid} = useTypedSelector(state => state.user['user']);
+    const {bundles, isLoading} = useTypedSelector(state => state.shop);
+
     const [sorting, setSorting] = useState(SORT_CHEAP_FIRST);
+    
+    const emptyIsBuying: IIsBuying = {
+        isOpened: false,
+        bundleName: '',
+        bundleId: '',
+        uid: '',
+        price: 0,
+        image: '',
+        name: ''
+    }
+    const [isBuying, setIsBuying] = useState<IIsBuying>(emptyIsBuying);
+
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        dispatch(setBundles())
+    }, [])
+
+    const onClickBuyItem = (item: IIsBuying) => {
+        console.log(item)
+        setIsBuying({...item, isOpened: true, uid});
+    }
+    const onClickCloseBuying = () => {
+        setIsBuying(emptyIsBuying);
+    }
 
     const onSortingChange = (e: SelectChangeEvent) => {
         // dispatch<any>(sortItems(caps, e.target.value));
@@ -95,13 +130,32 @@ function ShopPage() {
     }
 
     const onClick = () => {
-        
+        dispatch(setBundles());
+    }
+
+    let bundlesWithoutCaps:any = [];
+
+    if(bundles){
+        bundlesWithoutCaps = bundles.map(i => i);
     }
 
     return ( 
         <Box sx={{
             background: '#f4f4f5',
             minHeight: '100vh'}}>
+            {
+                isBuying.isOpened
+                    ? <BuyingItemModal
+                        closeModal={onClickCloseBuying}
+                        bundleId={isBuying.bundleId}
+                        bundleName={isBuying.bundleName}
+                        image={isBuying.image}
+                        name={isBuying.name}
+                        rare={'Common'}
+                        price={isBuying.price}
+                        uid={uid} />
+                    : <></>
+            }
             <Container>
                 <Typography variant="h4" sx={{fontWeight: 'bold', paddingTop: '1rem'}}>Магазин</Typography>
                 <SortingBlock>
@@ -125,7 +179,23 @@ function ShopPage() {
                 
                 <Box sx={{display: 'flex', height: '100vh', width: '100%'}}>
                     <ItemsList>
-                        <ShopItem />
+                        {
+                            isLoading && !isBuying.isOpened
+                                ? <Box sx={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                    <Loader />
+                                </Box>
+                                : bundlesWithoutCaps.map((b: IInvItem) => <ShopItem
+                                    uid={uid}
+                                    key={b.id}
+                                    coins={coins}
+                                    bundleId={b.id}
+                                    bundleName={b.bundle}
+                                    image={b.image}
+                                    name={b.name}
+                                    price={b.price || 0}
+                                    onClickBuyItem={(item: IIsBuying) => onClickBuyItem(item)} />)
+                        }
+                        
                     </ItemsList>
                     <Box sx={{width: '30%', height: '100%', marginLeft: '1rem', position: 'relative'}}>
                         <BalanceInfo>
@@ -133,7 +203,7 @@ function ShopPage() {
                                 Ваш баланс
                             </Typography>
                             <Typography sx={{textAlign: 'center', fontSize: '2rem'}}>
-                                250<Typography component="span" sx={{fontSize: '1.5rem', color: '#909497'}}>
+                                {coins}<Typography component="span" sx={{fontSize: '1.5rem', color: '#909497'}}>
                                     c.
                                 </Typography>
                             </Typography>

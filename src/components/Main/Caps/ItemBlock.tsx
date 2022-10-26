@@ -263,6 +263,7 @@ const BlockInfo = s.div`
 interface ICapProps {
     uid: string;
     isSellingMode: boolean;
+    isSelected: boolean;
     openModalSelling: (uid: string, id: string, cost: number) => void;
     addItemToSelling: (cap: IInvItemToSell) => void;
     removeItemToSelling: (id: string) => void;
@@ -274,12 +275,11 @@ interface ICapProps {
 
 function InvItemBlock({ 
     id, name, image, cost, points, rare, 
-    bundle, uid, date, isSellingMode, type,
+    bundle, uid, date, isSellingMode, type, isSelected,
     openModalSelling, addItemToSelling, removeItemToSelling,
     openOpeningBundleModal, closeOpeningBundleModal }: ICapProps & IInvItem) {
-
     const [isOpenedMenu, setOpenedMenu] = useState(false);
-    const [isSelectedToSell, setIsSelectedToSell] = useState(false);
+    const [isSelectedToSell, setIsSelectedToSell] = useState(isSelected);
 
     const onClickOpenMenu = (open: boolean) => {
         if(isSellingMode){
@@ -307,7 +307,8 @@ function InvItemBlock({
 
     useEffect(() => {
         if(isSelectedToSell) setIsSelectedToSell(false)
-    },[isSellingMode])
+        setIsSelectedToSell(isSelected)
+    },[isSellingMode, isSelected])
     
     const dispatch = useDispatch();
     

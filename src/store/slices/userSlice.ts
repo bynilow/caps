@@ -52,6 +52,9 @@ const userSlice = createSlice({
         },
         addCoins(state, action: PayloadAction<number> ){
             state.coins += action.payload;
+        },
+        decrementCoins(state, action: PayloadAction<number>){
+            state.coins -= action.payload;
         }
         
     }

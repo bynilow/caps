@@ -1,4 +1,5 @@
 import { getAuth, GoogleAuthProvider, signInWithPopup, UserInfo } from "firebase/auth";
+import { doc, getDoc, getFirestore } from "firebase/firestore";
 import userSlice from "../slices/userSlice";
 import { AppDispatch } from "../store";
 
@@ -40,6 +41,21 @@ export const signOut = () => {
         try {
             getAuth().signOut();
             dispatch(userSlice.actions.logoutUserReducer())
+        } catch (e: any) {
+            dispatch(userSlice.actions.setErrorReducer(e.message))
+        }
+    }
+}
+
+export const getCoins = (uid: string) => {
+    return async (dispatch: AppDispatch) => {
+        try {
+            const db = getFirestore();
+            const docRef = doc(db, "users", uid);
+            const docSnap = await getDoc(docRef);
+
+            const coins: number = docSnap.data()?.coins;
+            dispatch(userSlice.actions.setCoins(coins || 0))
         } catch (e: any) {
             dispatch(userSlice.actions.setErrorReducer(e.message))
         }

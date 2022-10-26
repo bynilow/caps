@@ -1,23 +1,23 @@
-import { Box, Typography } from '@mui/material';
+import { Box, IconButton, Typography } from '@mui/material';
 import s from 'styled-components';
 import { useTypedSelector } from '../../../hooks/useTypedSelector';
 import { IInvItem, IOpeningBundleModal } from '../../../types/invItemTypes';
 import Loader from '../../common/Loader';
 import EmptyItemBlock from '../../Main/Caps/EmptyItemBlock';
 import ItemBlockOpening from '../../Main/Caps/ItemBlockOpening';
+import CloseIcon from '@mui/icons-material/Close';
 
 
 const BlockInfo = s.div`
     position: fixed;
 
-    width: 100%;
+    width: 65%;
     height: 100%;
-    padding-top: 2rem;
 
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10001;
+    z-index: 99999;
 `
 
 const ListCaps = s.div`
@@ -25,10 +25,12 @@ const ListCaps = s.div`
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    max-height: 20%;
 `
 
 const Container = s.div`
-    max-width: 65%;
+    max-width: 100%;
+    height: 100%;
 
     display: flex;
     flex-direction: column;
@@ -55,15 +57,23 @@ const ButtonOpen = s.button`
 interface IOpeningListItems {
     itemsInBundle: IInvItem[] | null;
     onClickOpenBundle: () => void;
+    closeModal: () => void;
 }
 
-function OpeningListItems({ id, uid, image, name, rare, bundle, itemsInBundle, onClickOpenBundle }: IOpeningBundleModal & IOpeningListItems) {
+function OpeningListItems({ 
+    id, uid, image, name, rare, bundle, itemsInBundle, 
+    onClickOpenBundle, closeModal }: IOpeningBundleModal & IOpeningListItems) {
 
     const { isLoading } = useTypedSelector(state => state.inventory);    
 
     return (
         <BlockInfo>
             <Container>
+                <IconButton 
+                    sx={{position: 'absolute', top: '0', right: '0', padding: '1rem', color: 'white'}}
+                    onClick={closeModal}>
+                    <CloseIcon />
+                </IconButton>
                 <ItemBlockOpening
                     id={id}
                     image={image}
@@ -106,11 +116,12 @@ function OpeningListItems({ id, uid, image, name, rare, bundle, itemsInBundle, o
                                 </Box>
                                 : <></>
                     }
-                    <EmptyItemBlock />
-                    <EmptyItemBlock />
-                    <EmptyItemBlock />
-                    <EmptyItemBlock />
-                    <EmptyItemBlock />
+                    <EmptyItemBlock size='small'/>
+                    <EmptyItemBlock size='small'/>
+                    <EmptyItemBlock size='small'/>
+                    <EmptyItemBlock size='small'/>
+                    <EmptyItemBlock size='small'/>
+
 
                 </ListCaps>
             </Container>

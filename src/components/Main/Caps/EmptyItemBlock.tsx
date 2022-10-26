@@ -1,13 +1,21 @@
+import styled from 'styled-components';
 import s from 'styled-components'
 
-const Empty = s.div`
-    width: 10rem;
-    height: 10rem;
-    margin: 1rem;
+const Empty = styled.div.attrs((props:any) => ({
+    size: props.size
+}))`
+    width: ${(props:any) => props.size !== 'small' ? '10rem' : '8rem'};
+    height: ${(props:any) => props.size !== 'small' ? '10rem' : '8rem'};
+    margin: ${(props:any) => props.size !== 'small' ? '1rem' : '0.5rem'};
 `
-function EmptyItemBlock() {
+
+interface IEmptyItemBlock {
+    size?: string;
+}
+
+function EmptyItemBlock({size = 'medium'}: IEmptyItemBlock) {
     return ( 
-        <Empty />
+        <Empty size={size} />
     );
 }
 

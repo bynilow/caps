@@ -58,7 +58,7 @@ const Block = styled.div.attrs((props:any) => ({
     box-shadow: 0 0 5px rgba(0,0,0,0.1);
 
     padding: 0.5rem;
-    margin: 1rem;
+    margin: 0.5rem;
 
     position: relative;
 

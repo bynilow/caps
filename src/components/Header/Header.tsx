@@ -1,15 +1,18 @@
 import { Avatar, Box, Button, Divider, IconButton, Menu, MenuItem, Typography } from '@mui/material';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import s from 'styled-components'
 import { Context } from '../..';
 import { useTypedSelector } from '../../hooks/useTypedSelector';
 import { useAuthState } from 'react-firebase-hooks/auth'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { useDispatch } from 'react-redux';
-import { signOut } from '../../store/action-creators/userAC';
+import { getCoins, signOut } from '../../store/action-creators/userAC';
 import styled from 'styled-components';
+import { NavLink } from 'react-router-dom';
+import { useAppDispatch } from '../../hooks/useAppDispatch';
 
-const ButtonHeader = s.button`
+
+const ButtonHeader = styled(NavLink)`
     background: none;
     border: none;
     border-radius: 5px;
@@ -19,6 +22,8 @@ const ButtonHeader = s.button`
     transition: 0.1s;
 
     font-size: 14px;
+    text-decoration: none;
+    color: black;
 
     &:hover{
         background: #E5E7E9;
@@ -100,12 +105,16 @@ const AvatarOuter = s.div`
 function Header() {
     const { isAuth } = useTypedSelector(state => state.user);
     const { coins } = useTypedSelector(state => state.user);
-    const { photoURL, displayName } = useTypedSelector(state => state.user['user']);
+    const { photoURL, displayName, uid } = useTypedSelector(state => state.user['user']);
 
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const logout = () => {
         dispatch<any>(signOut());
     }
+
+    useEffect(() => {
+        uid && dispatch(getCoins(uid))
+    }, [uid, coins])
 
     return (
         <Box sx={{
@@ -121,13 +130,13 @@ function Header() {
                     isAuth
                         ? <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
 
-                            <ButtonHeader>
+                            <ButtonHeader to="/inventory">
                                 Инвентарь
                             </ButtonHeader>
-                            <ButtonHeader>
+                            <ButtonHeader to="/shop">
                                 Магазин
                             </ButtonHeader>
-                            <ButtonHeader>
+                            <ButtonHeader to="/auction">
                                 Аукцион
                             </ButtonHeader>
                             <AvatarOuter>
@@ -149,10 +158,10 @@ function Header() {
                                     </Box>
                                     <Divider />
                                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                        <ButtonHeader>
+                                        <ButtonHeader to="/settings">
                                             Настройки
                                         </ButtonHeader>
-                                        <ButtonHeader onClick={logout}>
+                                        <ButtonHeader onClick={logout} to="/login">
                                             Выход
                                         </ButtonHeader>
                                     </Box>
@@ -167,7 +176,7 @@ function Header() {
                                 Выход
                             </ButtonHeader> */}
                         </Box>
-                        : <ButtonHeader >Вход</ButtonHeader>
+                        : <ButtonHeader to="/login" >Вход</ButtonHeader>
                 }
             </ContainerHeader>
         </Box>
