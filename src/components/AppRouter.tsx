@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useTypedSelector } from "../hooks/useTypedSelector";
 import { privateRoutes, publicRoutes } from "../routes";
 import { LOGIN_ROUT, MAIN_ROUT } from "../utils/consts";
+import GamePage from "./Game/GamePage";
 import LoginPage from "./Login/LoginPage";
 import InventoryPage from "./Main/InventoryPage";
 import ShopPage from "./Shop/ShopPage";
@@ -15,6 +16,7 @@ function AppRouter() {
             <Routes>
                 <Route path='/inventory' element={<InventoryPage />} />
                 <Route path='/shop' element={<ShopPage />} />
+                <Route path='/game' element={<GamePage />} />
                 {/* <Route path='*' element={<Navigate to='/inventory' />} /> */}
             </Routes>
         )
